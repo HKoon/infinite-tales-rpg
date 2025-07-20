@@ -18,10 +18,11 @@ tests
 docs
 .github
 .cursor
-.prettierignore
-.prettierrc
-eslint.config.js
-playwright.config.ts
-tsconfig.json
-vite.config.ts
-vercel.json
+# Keep these files as they're needed for build
+# .prettierignore
+# .prettierrc
+# eslint.config.js
+# playwright.config.ts
+# tsconfig.json
+# vite.config.ts
+# vercel.json

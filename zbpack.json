@@ -1,6 +1,9 @@
 {
   "build_command": "npm run build",
-  "install_command": "npm install",
+  "install_command": "npm ci",
   "start_command": "node build",
-  "node_version": "18"
+  "node_version": "18",
+  "build_env": {
+    "NODE_ENV": "production"
+  }
 }
