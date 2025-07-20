@@ -40,6 +40,12 @@ Set these in your Zeabur dashboard:
 
 ### Troubleshooting
 
+#### Environment Variable Issues
+If you encounter build errors related to `VERCEL_ENV` not being exported:
+1. The project automatically handles environment variable compatibility between Vercel and Zeabur
+2. Uses dynamic environment imports instead of static imports
+3. Falls back to `NODE_ENV` or 'development' if platform-specific variables are unavailable
+
 #### TailwindCSS Build Issues
 If you encounter TailwindCSS-related build errors:
 1. Ensure TailwindCSS is in devDependencies
