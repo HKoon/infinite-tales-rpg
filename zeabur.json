@@ -1,0 +1,13 @@
+{
+  "name": "infinite-tales-rpg",
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "deploy": {
+    "env": {
+      "PORT": "3000"
+    }
+  }
+}
