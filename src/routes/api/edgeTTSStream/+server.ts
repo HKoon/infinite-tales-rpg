@@ -27,20 +27,41 @@ export async function GET({ url }) {
 			start(controller) {
 				readable.on('data', (chunk) => {
 					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.enqueue(chunk); // Enqueue each chunk as it arrives
+					try {
+						controller.enqueue(chunk); // Enqueue each chunk as it arrives
+					} catch (error) {
+						// Handle case where controller is already closed
+						console.warn('Failed to enqueue chunk, controller may be closed:', error);
+						isStreamClosed = true;
+					}
 				});
 
 				readable.on('end', () => {
 					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.close(); // Close the stream when the readable stream ends
+					try {
+						controller.close(); // Close the stream when the readable stream ends
+					} catch (error) {
+						console.warn('Failed to close controller, may already be closed:', error);
+					}
 					isStreamClosed = true; // Mark the stream as closed
 				});
 
 				readable.on('error', (err) => {
 					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.error(err); // Propagate errors
+					try {
+						controller.error(err); // Propagate errors
+					} catch (error) {
+						console.warn('Failed to signal error to controller:', error);
+					}
 					isStreamClosed = true; // Mark the stream as closed
 				});
+			},
+			cancel() {
+				// Handle stream cancellation
+				isStreamClosed = true;
+				if (readable && typeof readable.destroy === 'function') {
+					readable.destroy();
+				}
 			}
 		});
 

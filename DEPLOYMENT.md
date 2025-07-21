@@ -46,6 +46,19 @@ If you encounter build errors related to `VERCEL_ENV` not being exported:
 2. Uses dynamic environment imports instead of static imports
 3. Falls back to `NODE_ENV` or 'development' if platform-specific variables are unavailable
 
+#### Runtime Issues
+If you encounter runtime errors in production:
+
+**Vercel Analytics/Speed Insights 404 errors:**
+- The project automatically detects the deployment platform
+- Vercel analytics only load when actually running on Vercel domains
+- No action needed - these warnings are harmless on other platforms
+
+**Stream Controller Errors (msedge-tts):**
+- Enhanced error handling prevents crashes from closed stream controllers
+- Graceful degradation when TTS streams are interrupted
+- Automatic cleanup of resources on stream cancellation
+
 #### TailwindCSS Build Issues
 If you encounter TailwindCSS-related build errors:
 1. Ensure TailwindCSS is in devDependencies
