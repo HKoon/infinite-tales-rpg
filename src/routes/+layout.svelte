@@ -1,18 +1,16 @@
 <script lang="ts">
 	import { inject } from '@vercel/analytics';
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	import { browser } from '$app/environment';
 
 	let { children, data } = $props();
-	const mode = data.VERCEL_ENV || 'development';
 	
 	// Only inject Vercel analytics when actually running on Vercel
-	// Check for actual Vercel environment, not just production mode
-	const isVercel = typeof window !== 'undefined' && 
-		(window.location.hostname.includes('vercel.app') || 
-		 window.location.hostname.includes('vercel.com') ||
-		 data.VERCEL_ENV === 'production' && mode === 'production');
+	// data.VERCEL_ENV will only exist if we're actually on Vercel
+	const isVercel = !!data.VERCEL_ENV;
+	const isProduction = data.VERCEL_ENV === 'production';
 	
-	if (isVercel && mode === 'production') {
+	if (browser && isVercel && isProduction) {
 		injectSpeedInsights();
 		inject({ mode: 'production' });
 	}

@@ -1,6 +1,7 @@
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
 export async function GET({ url }) {
+	let tts = null;
 	try {
 		const text = url.searchParams.get('text') as string;
 		if (!text || text === 'undefined') {
@@ -15,10 +16,19 @@ export async function GET({ url }) {
 			data.voice = 'de-DE-SeraphinaMultilingualNeural';
 		}
 
-		const tts = new MsEdgeTTS();
+		// Validate text length to prevent excessive resource usage
+		if (data.text.length > 5000) {
+			return new Response(JSON.stringify({ error: 'Text too long, maximum 5000 characters' }), { status: 400 });
+		}
+
+		tts = new MsEdgeTTS();
 		await tts.setMetadata(data.voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-		const readable = tts.toStream(data.text).audioStream;
+		const streamResult = tts.toStream(data.text);
+		if (!streamResult || !streamResult.audioStream) {
+			throw new Error('Failed to create TTS stream');
+		}
+		const readable = streamResult.audioStream;
 
 		let isStreamClosed = false; // Flag to track stream state
 
@@ -59,8 +69,16 @@ export async function GET({ url }) {
 			cancel() {
 				// Handle stream cancellation
 				isStreamClosed = true;
-				if (readable && typeof readable.destroy === 'function') {
-					readable.destroy();
+				try {
+					if (readable && typeof readable.destroy === 'function') {
+						readable.destroy();
+					}
+					// Clean up TTS instance if possible
+					if (tts && typeof tts.close === 'function') {
+						tts.close();
+					}
+				} catch (cleanupError) {
+					console.warn('Error during stream cleanup:', cleanupError);
 				}
 			}
 		});
@@ -75,6 +93,16 @@ export async function GET({ url }) {
 		});
 	} catch (err) {
 		console.error('Error in GET handler:', err);
+		
+		// Clean up TTS instance on error
+		try {
+			if (tts && typeof tts.close === 'function') {
+				tts.close();
+			}
+		} catch (cleanupError) {
+			console.warn('Error during TTS cleanup:', cleanupError);
+		}
+		
 		return new Response(JSON.stringify({ error: 'Failed to process TTS' }), { status: 500 });
 	}
 }
