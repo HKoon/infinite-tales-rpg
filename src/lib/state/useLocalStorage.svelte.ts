@@ -23,7 +23,15 @@ export function useLocalStorage<T>(key: string, initialValue?: T) {
 
 	onMount(() => {
 		const currentValue = localStorage.getItem(key);
-		if (currentValue) value = JSON.parse(currentValue);
+		if (currentValue) {
+			try {
+				value = JSON.parse(currentValue);
+			} catch (e) {
+				// If parsing fails, treat as string value
+				console.warn(`Failed to parse localStorage key '${key}' with value '${currentValue}', treating as string`);
+				value = currentValue as T;
+			}
+		}
 		isMounted = true;
 	});
 

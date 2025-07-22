@@ -45,7 +45,13 @@ export const downloadLocalStorageAsJson = () => {
 			(function () {
 				const o = {};
 				for (const k of Object.keys(toSave)) {
-					o[k] = JSON.parse(toSave[k]);
+					try {
+						o[k] = JSON.parse(toSave[k]);
+					} catch (e) {
+						// If parsing fails, keep the original string value
+						console.warn(`Failed to parse localStorage key '${k}' with value '${toSave[k]}', keeping as string`);
+						o[k] = toSave[k];
+					}
 				}
 				return o;
 			})(),
@@ -149,7 +155,13 @@ export function getRowsForTextarea(object: object) {
 export function parseState(newState: object) {
 	Object.keys(newState).forEach((key) => {
 		if (isString(newState[key])) {
-			newState[key] = JSON.parse(newState[key]);
+			try {
+				newState[key] = JSON.parse(newState[key]);
+			} catch (e) {
+				// If parsing fails, keep the original string value
+				console.warn(`Failed to parse state key '${key}' with value '${newState[key]}', keeping as string`);
+				// Keep the original string value
+			}
 		}
 	});
 }
