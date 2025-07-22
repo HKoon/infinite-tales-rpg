@@ -51,7 +51,7 @@
 	const rollDifferenceHistoryState = useLocalStorage('rollDifferenceHistoryState', []);
 	const campaignState = useLocalStorage('campaignState', initialCampaignState);
 	const currentChapterState = useLocalStorage('currentChapterState');
-	const characterActionsState = useLocalStorage('characterActionsState');
+	const characterActionsState = useLocalStorage('characterActionsState', []);
 	const levelUpState = useLocalStorage('levelUpState');
 	const customMemoriesState = useLocalStorage<string>('customMemoriesState');
 	const customGMNotesState = useLocalStorage<string>('customGMNotesState');

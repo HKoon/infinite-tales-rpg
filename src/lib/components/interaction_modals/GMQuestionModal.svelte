@@ -46,7 +46,7 @@
 	const historyMessagesState = useLocalStorage<LLMMessage[]>('historyMessagesState');
 	const inventoryState = useLocalStorage<InventoryState>('inventoryState', {});
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
-	const gameActionsState = useLocalStorage<GameActionState[]>('gameActionsState');
+	const gameActionsState = useLocalStorage<GameActionState[]>('gameActionsState', []);
 	const customMemoriesState = useLocalStorage<string>('customMemoriesState');
 	const customGMNotesState = useLocalStorage<string>('customGMNotesState');
 	const npcState = useLocalStorage<NPCState>('npcState', {});

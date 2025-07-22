@@ -2,9 +2,9 @@
 	import { initialThoughtsState, stringifyPretty, type ThoughtsState } from '$lib/util.svelte';
 	import { useLocalStorage } from '$lib/state/useLocalStorage.svelte';
 
-	const gameActionsState = useLocalStorage('gameActionsState');
+	const gameActionsState = useLocalStorage('gameActionsState', []);
 	const npcState = useLocalStorage('npcState', {});
-	const characterActionsState = useLocalStorage('characterActionsState', {});
+	const characterActionsState = useLocalStorage('characterActionsState', []);
 	let thoughtsState = useLocalStorage<ThoughtsState>('thoughtsState', initialThoughtsState);
 </script>
 
