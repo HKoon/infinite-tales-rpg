@@ -316,7 +316,7 @@
 		gameActionsState.value = updatedGameActionsState;
 		playerCharactersGameState = updatedPlayerCharactersGameState;
 		tick().then(() => customActionInput.scrollIntoView(false));
-		if (characterActionsState.value.length === 0) {
+		if (Array.isArray(characterActionsState.value) && characterActionsState.value.length === 0) {
 			const { thoughts, actions } = await actionAgent.generateActions(
 				currentGameActionState,
 				historyMessagesState.value,
@@ -895,7 +895,7 @@
 	}
 
 	const addSkillsIfApplicable = (actions: Action[]) => {
-		if (gameSettingsState.value?.aiIntroducesSkills) {
+		if (gameSettingsState.value?.aiIntroducesSkills && Array.isArray(actions)) {
 			actions.forEach((action: Action) => {
 				const skill = isNewSkill($state.snapshot(characterStatsState.value), action);
 				//TODO skill can be trait sometimes which we dont want?
@@ -971,7 +971,7 @@
 	}
 
 	function renderGameState(state: GameActionState, actions: Array<Action>) {
-		if (!isGameEnded.value) {
+		if (!isGameEnded.value && Array.isArray(actions)) {
 			actions.forEach((action) =>
 				addActionButton(action, state.is_character_in_combat, 'ai-gen-action')
 			);
