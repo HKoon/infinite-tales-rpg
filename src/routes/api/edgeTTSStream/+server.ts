@@ -20,171 +20,220 @@ function recordFailure() {
 	lastFailureTime = Date.now();
 }
 
+// 添加重试机制
+async function createTTSWithRetry(voice: string, format: any, maxRetries = 3): Promise<MsEdgeTTS> {
+	let lastError;
+	
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			console.log(`TTS initialization attempt ${attempt}/${maxRetries}`);
+			const tts = new MsEdgeTTS();
+			
+			// 添加更短的超时时间用于初始化
+			const initTimeout = new Promise((_, reject) => {
+				setTimeout(() => reject(new Error('TTS initialization timeout')), 15000);
+			});
+			
+			await Promise.race([
+				tts.setMetadata(voice, format),
+				initTimeout
+			]);
+			
+			console.log(`TTS initialized successfully on attempt ${attempt}`);
+			return tts;
+		} catch (error) {
+			lastError = error;
+			console.warn(`TTS initialization failed on attempt ${attempt}:`, error);
+			
+			// 如果不是最后一次尝试，等待一段时间再重试
+			if (attempt < maxRetries) {
+				const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 指数退避，最大5秒
+				console.log(`Waiting ${delay}ms before retry...`);
+				await new Promise(resolve => setTimeout(resolve, delay));
+			}
+		}
+	}
+	
+	throw lastError;
+}
+
+// 添加流创建的重试机制
+async function createStreamWithRetry(tts: MsEdgeTTS, text: string, maxRetries = 2) {
+	let lastError;
+	
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			console.log(`Stream creation attempt ${attempt}/${maxRetries}`);
+			
+			const streamTimeout = new Promise((_, reject) => {
+				setTimeout(() => reject(new Error('Stream creation timeout')), 20000);
+			});
+			
+			const streamResult = await Promise.race([
+				tts.toStream(text),
+				streamTimeout
+			]);
+			
+			if (!streamResult || !streamResult.audioStream) {
+				throw new Error('No audio stream returned');
+			}
+			
+			console.log(`Stream created successfully on attempt ${attempt}`);
+			return streamResult;
+		} catch (error) {
+			lastError = error;
+			console.warn(`Stream creation failed on attempt ${attempt}:`, error);
+			
+			if (attempt < maxRetries) {
+				const delay = 1000 * attempt;
+				console.log(`Waiting ${delay}ms before stream retry...`);
+				await new Promise(resolve => setTimeout(resolve, delay));
+			}
+		}
+	}
+	
+	throw lastError;
+}
+
 export async function GET({ url }) {
 	// Check circuit breaker
 	if (isCircuitOpen()) {
-		console.warn('TTS circuit breaker is open, rejecting request');
-		return new Response(JSON.stringify({ error: 'TTS service temporarily unavailable' }), { status: 503 });
+		console.warn('TTS service circuit breaker is open, rejecting request');
+		return new Response('TTS service temporarily unavailable', { status: 503 });
 	}
-	
+
+	const text = url.searchParams.get('text');
+	const voice = url.searchParams.get('voice');
+
+	// Enhanced input validation
+	if (!text || text.trim().length === 0) {
+		console.warn('TTS request rejected: empty or missing text');
+		return new Response('Text parameter is required and cannot be empty', { status: 400 });
+	}
+
+	if (!voice || voice.trim().length === 0) {
+		console.warn('TTS request rejected: empty or missing voice');
+		return new Response('Voice parameter is required and cannot be empty', { status: 400 });
+	}
+
+	if (text.length > 5000) {
+		console.warn(`TTS request rejected: text too long (${text.length} characters)`);
+		return new Response('Text too long (max 5000 characters)', { status: 400 });
+	}
+
+	console.log(`TTS request: voice=${voice}, text length=${text.length}`);
+
 	let tts: MsEdgeTTS | null = null;
+
 	try {
-		const text = url.searchParams.get('text') as string;
-		if (!text || text === 'undefined') {
-			return new Response(JSON.stringify({ error: 'Need to provide text' }), { status: 400 });
-		}
-		const data = {
-			voice: url.searchParams.get('voice') as string,
-			text: text.replace(/<\/?[^>]+(>|$)/g, '') // clean HTML
-		};
-		if (!data.voice || data.voice === 'undefined') {
-			// Use a default voice
-			data.voice = 'de-DE-SeraphinaMultilingualNeural';
+		// Use retry mechanism for TTS initialization
+		tts = await createTTSWithRetry(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+		// Use retry mechanism for stream creation
+		const streamResult = await createStreamWithRetry(tts, text);
+
+		// Additional validation of stream result
+		if (!streamResult) {
+			throw new Error('Stream creation returned null result');
 		}
 
-		// Validate text length to prevent excessive resource usage
-		if (data.text.length > 5000) {
-			return new Response(JSON.stringify({ error: 'Text too long, maximum 5000 characters' }), { status: 400 });
+		if (!streamResult.audioStream) {
+			throw new Error('Audio stream is undefined or null');
 		}
 
-		// Add timeout and better error handling for TTS initialization
-		tts = new MsEdgeTTS();
-		
-		// Set a timeout for the TTS operations to prevent hanging
-		const timeoutPromise = new Promise((_, reject) => {
-			setTimeout(() => reject(new Error('TTS operation timed out')), 30000); // 30 second timeout
-		});
-		
-		try {
-			if (!tts) {
-				throw new Error('TTS instance not initialized');
-			}
-			await Promise.race([
-				tts.setMetadata(data.voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3),
-				timeoutPromise
-			]);
-		} catch (metadataError) {
-			console.error('Failed to set TTS metadata:', metadataError);
-			throw new Error('TTS initialization failed');
-		}
+		console.log('TTS stream created successfully');
 
-		let streamResult;
-		try {
-			if (!tts) {
-				throw new Error('TTS instance not initialized');
-			}
-			streamResult = await Promise.race([
-				tts.toStream(data.text),
-				timeoutPromise
-			]);
-		} catch (streamError) {
-			console.error('Failed to create TTS stream:', streamError);
-			throw new Error('TTS stream creation failed');
-		}
-		
-		if (!streamResult || !streamResult.audioStream) {
-			throw new Error('Failed to create TTS stream - no audio stream returned');
-		}
-		const readable = streamResult.audioStream;
-
-		let isStreamClosed = false; // Flag to track stream state
-		let cleanupTimeout; // Timeout for cleanup
-
-		// Create a ReadableStream for the audio response
-		const stream = new ReadableStream({
+		// Convert the audio stream to a ReadableStream
+		const readableStream = new ReadableStream({
 			start(controller) {
-				// Set a cleanup timeout to prevent hanging connections
-				cleanupTimeout = setTimeout(() => {
-					if (!isStreamClosed) {
-						console.warn('TTS stream cleanup timeout reached');
-						isStreamClosed = true;
-						try {
-							controller.close();
-						} catch (e) {
-							console.warn('Error closing controller on timeout:', e);
+				streamResult.audioStream.on('data', (chunk) => {
+					try {
+						if (chunk && chunk.audio && chunk.audio.length > 0) {
+							controller.enqueue(chunk.audio);
+						} else {
+							console.warn('Received chunk with undefined or empty audio data');
 						}
-					}
-				}, 60000); // 60 second cleanup timeout
-				
-				readable.on('data', (chunk) => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					try {
-						controller.enqueue(chunk); // Enqueue each chunk as it arrives
 					} catch (error) {
-						// Handle case where controller is already closed
-						console.warn('Failed to enqueue chunk, controller may be closed:', error);
-						isStreamClosed = true;
-						if (cleanupTimeout) clearTimeout(cleanupTimeout);
+						console.error('Error processing audio chunk:', error);
+						controller.error(error);
 					}
 				});
 
-				readable.on('end', () => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					try {
-						controller.close(); // Close the stream when the readable stream ends
-						if (cleanupTimeout) clearTimeout(cleanupTimeout);
-					} catch (error) {
-						console.warn('Failed to close controller, may already be closed:', error);
-					}
-					isStreamClosed = true; // Mark the stream as closed
+				streamResult.audioStream.on('end', () => {
+					console.log('TTS audio stream ended successfully');
+					controller.close();
 				});
 
-				readable.on('error', (err) => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					console.error('TTS readable stream error:', err);
-					try {
-						controller.error(err); // Propagate errors
-						if (cleanupTimeout) clearTimeout(cleanupTimeout);
-					} catch (error) {
-						console.warn('Failed to signal error to controller:', error);
+				streamResult.audioStream.on('error', (error) => {
+					console.error('TTS audio stream error:', error);
+					
+					// Special handling for audio undefined errors
+					if (error.message && error.message.includes('audio')) {
+						console.error('Detected audio-related error, this might be the "audio undefined" issue');
+						recordFailure();
 					}
-					isStreamClosed = true; // Mark the stream as closed
+					
+					controller.error(error);
 				});
 			},
 			cancel() {
-				// Handle stream cancellation
-				isStreamClosed = true;
-				if (cleanupTimeout) clearTimeout(cleanupTimeout);
-				try {
-					if (readable && typeof readable.destroy === 'function') {
-						readable.destroy();
-					}
-					// Clean up TTS instance if possible
-					if (tts && typeof (tts as any).close === 'function') {
-						(tts as any).close();
-					}
-				} catch (cleanupError) {
-					console.warn('Error during stream cleanup:', cleanupError);
+				console.log('TTS stream cancelled by client');
+				if (streamResult.audioStream) {
+					streamResult.audioStream.destroy();
 				}
 			}
 		});
 
 		// Reset failure count on successful stream creation
 		failureCount = 0;
-		
-		// Return the stream as the response with the correct content-type for the audio format
-		return new Response(stream, {
+
+		return new Response(readableStream, {
 			headers: {
-				'Content-Type': 'audio/mp3', // MIME type for MP3
-				'Transfer-Encoding': 'chunked', // Ensure the response is streamed
-				'cache-control': 'public, max-age=604800, immutable' //cache one year and never revalidate
+				'Content-Type': 'audio/mpeg',
+				'Cache-Control': 'no-cache',
+				'Connection': 'keep-alive'
 			}
 		});
-	} catch (err) {
-		console.error('Error in GET handler:', err);
+	} catch (error) {
+		console.error('TTS error:', error);
 		
-		// Record failure for circuit breaker
-		recordFailure();
-		
-		// Clean up TTS instance on error
-		try {
-			if (tts && typeof (tts as any).close === 'function') {
-				(tts as any).close();
-			}
-		} catch (cleanupError) {
-			console.warn('Error during TTS cleanup:', cleanupError);
+		// Enhanced error logging
+		if (error.message) {
+			console.error('Error message:', error.message);
+		}
+		if (error.stack) {
+			console.error('Error stack:', error.stack);
 		}
 		
-		return new Response(JSON.stringify({ error: 'Failed to process TTS' }), { status: 500 });
+		// Special handling for specific error types
+		if (error.message && (
+			error.message.includes('audio') || 
+			error.message.includes('undefined') ||
+			error.message.includes('Cannot read properties')
+		)) {
+			console.error('Detected potential msedge-tts library issue');
+			recordFailure();
+		}
+
+		// Clean up TTS instance
+		if (tts) {
+			try {
+				// Attempt to clean up the TTS instance
+				tts = null;
+			} catch (cleanupError) {
+				console.warn('Error during TTS cleanup:', cleanupError);
+			}
+		}
+
+		recordFailure();
+
+		// Return appropriate error response
+		if (error.message && error.message.includes('timeout')) {
+			return new Response('TTS service timeout', { status: 504 });
+		} else if (error.message && error.message.includes('audio')) {
+			return new Response('TTS audio processing error', { status: 502 });
+		} else {
+			return new Response('TTS service error', { status: 500 });
+		}
 	}
 }

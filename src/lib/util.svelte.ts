@@ -182,9 +182,35 @@ export function playAudioFromStream(text, voice, onended?): HTMLAudioElement {
 	const audio = new Audio();
 	audio.src = getTTSUrl(text, voice);
 	audio.autoplay = true;
+	
+	// 添加错误处理
+	audio.onerror = (error) => {
+		console.error('Audio playback error:', error);
+		// 可以在这里添加用户友好的错误提示
+		if (onended) {
+			onended(); // 即使出错也调用结束回调
+		}
+	};
+	
+	// 添加加载超时
+	const loadTimeout = setTimeout(() => {
+		if (audio.readyState === 0) { // HAVE_NOTHING
+			console.warn('Audio loading timeout');
+			audio.src = ''; // 停止加载
+			if (onended) {
+				onended();
+			}
+		}
+	}, 30000); // 30秒超时
+	
+	audio.onloadstart = () => {
+		clearTimeout(loadTimeout);
+	};
+	
 	if (onended) {
 		audio.onended = onended;
 	}
+	
 	return audio;
 }
 
