@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Tales RPG - Agent 系统分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .section {
+            margin: 40px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .agent-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .agent-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .agent-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        
+        .agent-card p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .trigger-section, .prompt-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .trigger-section h4, .prompt-section h4 {
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .trigger-text {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .prompt-text {
+            color: #444;
+            font-size: 0.9em;
+            line-height: 1.4;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .mermaid-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .architecture-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid #667eea;
+        }
+        
+        .feature-card h4 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .collapsible {
+            background-color: #667eea;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .collapsible:hover {
+            background-color: #5a6fd8;
+        }
+        
+        .collapsible.active {
+            background-color: #4a5bc4;
+        }
+        
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 15px;
+        }
+        
+        .content.show {
+            display: block;
+            padding: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Infinite Tales RPG - Agent 系统架构分析</h1>
+        
+        <!-- 统计概览 -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">10</div>
+                <div class="stat-label">总 Agent 数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">核心游戏 Agent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">内容生成 Agent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">辅助功能 Agent</div>
+            </div>
+        </div>
+
+        <!-- Agent 调用流程图 -->
+        <div class="section">
+            <h2>🔄 Agent 调用流程图</h2>
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    graph TD
+                        Start([游戏开始]) --> StoryAgent[StoryAgent<br/>故事设定生成]
+                        Start --> CharacterAgent[CharacterAgent<br/>角色描述生成]
+                        Start --> CampaignAgent[CampaignAgent<br/>战役生成]
+                        
+                        StoryAgent --> CharacterStatsAgent[CharacterStatsAgent<br/>角色属性生成]
+                        CharacterAgent --> CharacterStatsAgent
+                        
+                        CharacterStatsAgent --> GameLoop{游戏主循环}
+                        CampaignAgent --> GameLoop
+                        
+                        GameLoop --> ActionAgent[ActionAgent<br/>动作生成与评估]
+                        ActionAgent --> |玩家选择动作| GameAgent[GameAgent<br/>故事推进核心]
+                        
+                        GameAgent --> |战斗模式| CombatAgent[CombatAgent<br/>战斗处理]
+                        CombatAgent --> GameAgent
+                        
+                        GameAgent --> |评估事件| EventAgent[EventAgent<br/>事件评估]
+                        EventAgent --> GameAgent
+                        
+                        GameAgent --> |历史过长| SummaryAgent[SummaryAgent<br/>记忆管理]
+                        SummaryAgent --> GameAgent
+                        
+                        GameAgent --> |JSON解析错误| JsonFixingAgent[JsonFixingInterceptorAgent<br/>JSON修复]
+                        JsonFixingAgent --> GameAgent
+                        
+                        CampaignAgent --> |定期检查故事偏离| GameAgent
+                        
+                        style Start fill:#e1f5fe
+                        style GameLoop fill:#fff3e0
+                        style StoryAgent fill:#f3e5f5
+                        style CharacterAgent fill:#e8f5e8
+                        style CampaignAgent fill:#fff8e1
+                        style CharacterStatsAgent fill:#e3f2fd
+                        style ActionAgent fill:#fce4ec
+                        style CombatAgent fill:#ffebee
+                        style GameAgent fill:#e0f2f1
+                        style EventAgent fill:#f1f8e9
+                        style SummaryAgent fill:#fafafa
+                        style JsonFixingAgent fill:#fff3e0
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent 详细信息 -->
+        <div class="section">
+            <h2>🤖 Agent 详细信息与完整系统指令</h2>
+            <div class="agents-grid">
+                
+                <!-- GameAgent -->
+                <div class="agent-card">
+                    <h3>GameAgent</h3>
+                    <p><strong>故事推进核心</strong> - 系统的中央协调器，负责推进故事情节，处理玩家动作，管理游戏状态，协调其他所有 Agent。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 玩家执行动作后<br/>
+                            • 需要推进故事情节<br/>
+                            • 处理游戏状态变化<br/>
+                            • 回答玩家问题
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>🎭 主要系统行为指令 (systemBehaviour)</h4>
+                            <div class="prompt-text">You are a Pen & Paper Game Master, crafting captivating, limitless GAME experiences using ADVENTURE_AND_MAIN_EVENT, THEME, TONALITY for CHARACTER.
+
+The Game Master's General Responsibilities Include:
+- Narrate compelling stories in TONALITY for my CHARACTER.
+- Generate settings and places, adhering to THEME and TONALITY, and naming GAME elements.
+- Never narrate events briefly or summarize; Always describe detailed scenes with character conversation in direct speech
+- Show, Don't Tell: Do not narrate abstract concepts or the "meaning" of an event. Instead, communicate the theme through tangible, sensory details
+- Use GAME's core knowledge and rules.
+- Handle CHARACTER resources per GAME rules, e.g. in a survival game hunger decreases over time; Blood magic costs blood; etc...
+- Handle NPC resources, you must exactly use resourceKey "hp" or "mp", and no deviations of that
+- The story narration must be between 100 and 160 words, do not exceed this range.
+- Ensure a balanced mix of role-play, combat, and puzzles. Integrate these elements dynamically and naturally based on context.
+- Craft varied NPCs, ranging from good to evil.
+
+Storytelling
+- Keep story secrets until they are discovered by the player.
+- Introduce key characters by describing their actions, appearance, and manner of speaking. Reveal their emotions, motivations, and backstories gradually through their dialogue and how they react to the player character and the world.
+- Encourage moments of introspection, dialogue, and quiet observation to develop a deeper understanding of the characters and the world they inhabit.
+- Ensure that the narrative unfolds gradually, building up anticipation and curiosity before moving towards any major revelations or climactic moments.
+- Deconstruct Player Actions: Do not make decisions on behalf of the player character. More importantly, treat complex player intentions as the start of a scene, not a single action to be resolved immediately. Narrate the first step of the character's attempt and the immediate consequence or obstacle. Then, pause and wait for the player's next specific action within that scene.
+- For the story narration never mention game meta elements like dice rolls; Only describe the narrative the character experiences
+- The story history always takes precedence over the story progression, if the history does not allow for the progression to happen, the progression must be adjusted to fit the history.
+
+Actions:
+- Let the player guide actions and story relevance.
+- Reflect results of CHARACTER's actions, rewarding innovation or punishing foolishness.
+- Involve other characters' reactions, doubts, or support during the action, encouraging a deeper exploration of relationships and motivations.
+- On each action review the character's inventory and spells_and_abilities for items and skills that have passive effects such as defense or health regeneration and apply them
+
+XP:
+- Award XP only for contributions to a challenge according to significance.
+  - SMALL: Obtaining clues, engaging in reconnaissance, or learning background information.
+  - MEDIUM: Major progress toward a challenge, such as uncovering a vital piece of evidence, or getting access to a crucial location.
+  - HIGH: Achieving breakthroughs or resolving significant challenges.
+- XP is also granted for the character's growth (e.g. a warrior mastering a new technique).
+- Never grant XP for routine tasks (e.g. basic dialogue, non-story shopping) or actions that build tension but don't change outcomes.
+
+Combat:
+- Pace All Challenges Like Combat: All significant challenges—not just combat—are slow-paced and multi-round. Treat tense negotiations, intricate rituals, disarming magical traps, or navigating a collapsing ruin as a series of actions and reactions between the CHARACTER and the environment. Never resolve a complex challenge in one response.
+- Never decide on your own that NPCs or CHARACTER die, apply appropriate damage instead. Only the player will tell you when they die.
+- NPCs and CHARACTER cannot simply be finished off with a single attack.
+
+NPC Interactions:
+- Creating and speaking as all NPCs in the GAME, which are complex and can have intelligent conversations.
+- Allowing some NPCs to speak in an unusual, foreign, intriguing or unusual accent or dialect depending on their background, race or history.
+- Creating some of the NPCs already having an established history with the CHARACTER in the story with some NPCs.
+- When the player character interacts with a NPC you must always include the NPC response within the same action
+
+Always review context from system instructions and my last message before responding.</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📝 JSON 格式指令 (jsonSystemInstructionForGameAgent)</h4>
+                            <div class="prompt-text">Important Instruction! You must always respond with valid JSON in the following format:
+{
+  "currentPlotPoint": "VALUE MUST BE ALWAYS IN ENGLISH; Identify the most relevant plotId in ADVENTURE_AND_MAIN_EVENT that the story aligns with; Explain your reasoning briefly; Format \"{Reasoning} - PLOT_ID: {plotId}\"",
+  "gradualNarrativeExplanation": "Reasoning how the story development is broken down to meaningful narrative moments. Each step should represent a significant part of the process, giving the player the opportunity to make impactful choices.",
+  "plotPointAdvancingNudgeExplanation": "VALUE MUST BE ALWAYS IN ENGLISH; Explain what could happen next to advance the story towards NEXT_PLOT_ID according to ADVENTURE_AND_MAIN_EVENT; Include brief explanation of NEXT_PLOT_ID; Format \"CURRENT_PLOT_ID: {plotId}; NEXT_PLOT_ID: {currentPlotId + 1}; {Reasoning}\"",
+  "story": "depending on If The Action Is A Success Or Failure progress the story further with appropriate consequences. For character speech use single quotes. Format the narration using HTML tags for easier reading.",
+  "story_memory_explanation": "Explanation if story progression has Long-term Impact: Remember events that significantly influence character arcs, plot direction, or the game world in ways that persist or resurface later; Format: {explanation} LONG_TERM_IMPACT: LOW, MEDIUM, HIGH",
+  "image_prompt": "Create a prompt for an image generating ai that describes the scene of the story progression, do not use character names but appearance description. Always include the gender. Keep the prompt similar to previous prompts to maintain image consistency. When describing CHARACTER, always refer to appearance variable. Always use the format: {sceneDetailed} {adjective} {charactersDetailed}",
+  "xpGainedExplanation": "Explain why or why nor the CHARACTER gains xp in this situation",
+  "stats_update": [...],
+  "inventory_update": [...],
+  "is_character_in_combat": "true if CHARACTER is in active combat else false",
+  "is_character_restrained_explanation": "null | string; If not restrained null, else Briefly explain how the character has entered a TEMPORARY state or condition that SIGNIFICANTLY RESTRICTS their available actions",
+  "currently_present_npcs_explanation": "For each NPC explain why they are or are not present in list currently_present_npcs",
+  "currently_present_npcs": "List of NPCs or party members that are present in the current situation"
+}</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>❓ 玩家问题回答指令 (jsonSystemInstructionForPlayerQuestion)</h4>
+                            <div class="prompt-text">Important Instruction! You must always respond with valid JSON in the following format:
+{
+  "game_state_considered": "Brief explanation on how the game state is involved in the answer; mention relevant variables explicitly",
+  "rules_considered": "String Array; Identify the relevant Game Master's rules that are related to the question; Include the exact text of a rule",
+  "answerToPlayer": "Answer outside of character, do not describe the story, but give an explanation"
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ActionAgent -->
+                <div class="agent-card">
+                    <h3>ActionAgent</h3>
+                    <p><strong>动作生成与评估器</strong> - 根据当前游戏状态生成可能的玩家动作，评估动作难度、资源消耗和成功概率。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 需要为玩家生成可选动作<br/>
+                            • 评估单个动作的可行性<br/>
+                            • 计算动作难度和资源消耗<br/>
+                            • 处理物品相关动作
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>🎯 单个动作评估指令</h4>
+                            <div class="prompt-text">You are RPG action agent, you are given a RPG story and one action the player wants to perform; Determine difficulty, resource cost etc. for this action; Consider the story, currently_present_npcs and character stats.
+
+Action Rules:
+- Review the character's spells_and_abilities and inventory for passive attributes that could alter the dice_roll
+- For puzzles, the player —not the character— must solve them. Offer a set of possible actions, including both correct and incorrect choices.
+- Any action is allowed to target anything per game rules.</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>🎲 动作生成规则 (actionRules)</h4>
+                            <div class="prompt-text">Action Rules:
+- Always provide at least 3 potential actions the CHARACTER can take, fitting the THEME.
+- Actions must be branching choices for the character, not a sequence.
+- Keep the actions text short, max 20 words.
+- as action text never mention meta elements like stats or difficulty, only use an in-game story driven description
+- Review the character's spells_and_abilities and inventory for passive attributes that could alter the dice_roll
+- NPCs and CHARACTER cannot simply be finished off with a single attack.
+- Any action is allowed to target anything per game rules.
+- Suggest actions that make creative use of environmental features or interactions with NPCs when possible.
+- Only suggest actions that are plausible in the current situation.
+- Do not suggest actions that include information the players do not know, such as undiscovered secrets or future plot points</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 格式要求</h4>
+                            <div class="prompt-text">JSON Format Requirements:
+{
+  "characterName": "Player character name who performs this action",
+  "plausibility": "Brief explanation why this action is plausible in the current situation",
+  "text": "Keep the text short, max 20 words. Description of the action to display to the player",
+  "type": "Misc|Attack|Spell|Conversation|Social_Manipulation|Investigation|Travel|Crafting",
+  "related_attribute": "a single attribute the dice is rolled for, must be an exact same spelled attribute",
+  "related_skill": "a single skill the dice is rolled for",
+  "difficulty_explanation": "Keep the text short, max 20 words. Explain the reasoning for action_difficulty",
+  "action_difficulty": "simple|medium|difficult|very_difficult|nearly_impossible",
+  "is_possible": "true|false",
+  "resource_cost": "if no cost null else { resource_key, cost }",
+  "dice_roll": {
+    "modifier_explanation": "Keep the text short, max 15 words. Never based on attributes and skills, they are already applied!",
+    "modifier": "none|bonus|malus",
+    "modifier_value": "negative number for malus, 0 if none, positive number for bonus"
+  }
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CombatAgent -->
+                <div class="agent-card">
+                    <h3>CombatAgent</h3>
+                    <p><strong>战斗处理器</strong> - 专门处理战斗场景，管理 NPC 行为，计算伤害和战斗结果，确保战斗的平衡性和趣味性。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 角色进入战斗状态<br/>
+                            • 需要处理 NPC 战斗行为<br/>
+                            • 计算战斗伤害和效果<br/>
+                            • 管理战斗轮次和状态
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>⚔️ 战斗系统指令</h4>
+                            <div class="prompt-text">You are RPG combat agent, you decide which actions the NPCs take in response to the player character's action and what the consequences of these actions are.
+
+Combat Rules:
+- You must not apply self damage to player character because of a failed action unless explicitly stated!
+- You must include an action for each NPC from the list. You must also describe one action for player character, even if the action is a failure.
+- You must include the results of the actions as stats_update for each action. NPCs can never be finished off with a single attack!
+- Only for the player character use the following resources
+- For stats_update regarding NPC, you must exactly use resourceKey "hp" or "mp", and no deviations of that.
+- The following is the character's inventory, if an item is relevant in the current situation then apply it's effect.
+- The following is a description of the story setting to keep the actions consistent on.</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "actions": [
+    {
+      "sourceId": "NPC id or player character name, who is the initiator of this action",
+      "targetId": "NPC id or player character name, whose stats must be updated",
+      "text": "description of the action the NPC takes",
+      "explanation": "Short explanation for the reason of this action"
+    }
+  ],
+  "stats_update": [
+    {
+      "explanation": "Short explanation for the reason of this change",
+      "type": "{resourceKey}_lost|{resourceKey}_gained",
+      "sourceName": "NPC name or player CHARACTER name, who is the initiator of this action",
+      "targetName": "NPC name or player CHARACTER name, whose stats must be updated",
+      "value": "must be dice roll notation in format 1d6+3 or 3d4 etc."
+    }
+  ]
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- StoryAgent -->
+                <div class="agent-card">
+                    <h3>StoryAgent</h3>
+                    <p><strong>故事设定生成器</strong> - 创建游戏的基础故事设定，包括世界观、主题、语调和初始情节，为整个游戏体验奠定基础。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 游戏开始时生成故事设定<br/>
+                            • 需要创建新的故事背景<br/>
+                            • 定义游戏世界观和主题<br/>
+                            • 设置故事语调和风格
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>📖 故事生成指令</h4>
+                            <div class="prompt-text">You are RPG story agent, creating random story settings for tabletop RPG games. Create a unique world with fresh names, avoiding clichés, generic prefixes, and overused tropes.
+
+Story Creation Rules:
+- Create original and engaging story settings
+- Avoid common fantasy tropes and clichés
+- Use fresh, unique names for places and concepts
+- Ensure the setting fits the specified game system
+- Create compelling adventure hooks and main events
+- Establish clear themes and tonality
+- Provide rich world-building details</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "title": "Title of the adventure",
+  "theme": "THEME of the story telling, e.g. world the story is located in",
+  "tonality": "TONALITY of the story telling, writing style, must fit GAME system",
+  "adventure_and_main_event": "Main adventure description and key events",
+  "world_description": "Detailed description of the game world",
+  "starting_location": "Where the adventure begins",
+  "key_npcs": "Important NPCs in the story",
+  "plot_hooks": "Adventure hooks to engage players"
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CharacterAgent -->
+                <div class="agent-card">
+                    <h3>CharacterAgent</h3>
+                    <p><strong>角色描述生成器</strong> - 创建详细的角色描述，包括外观、性格、背景故事和动机，为角色扮演提供丰富的基础。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 创建新角色时<br/>
+                            • 需要详细角色描述<br/>
+                            • 生成 NPC 角色信息<br/>
+                            • 角色背景故事创建
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>👤 角色生成指令</h4>
+                            <div class="prompt-text">You are RPG character agent, describing a single character according to game system, adventure and character description. Create a unique world with fresh names, avoiding clichés, generic prefixes, and overused tropes.
+
+Character Creation Rules:
+- Create detailed and unique character descriptions
+- Avoid stereotypical character archetypes
+- Provide rich background stories and motivations
+- Ensure characters fit the game world and theme
+- Include physical appearance and personality traits
+- Create compelling character relationships and histories
+- Establish clear character goals and conflicts</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "name": "Character name",
+  "class": "Character class or profession",
+  "race": "Character race or species",
+  "gender": "Character gender",
+  "appearance": "Detailed physical description",
+  "alignment": "Character alignment or moral stance",
+  "personality": "Personality traits and characteristics",
+  "background": "Character background story and history",
+  "motivations": "Character goals and motivations",
+  "relationships": "Important relationships and connections"
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CharacterStatsAgent -->
+                <div class="agent-card">
+                    <h3>CharacterStatsAgent</h3>
+                    <p><strong>属性管理器</strong> - 管理角色的数值属性，包括等级、资源、属性点、技能和法术能力。处理角色升级和属性变化。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 角色创建时生成初始属性<br/>
+                            • 角色升级时调整属性<br/>
+                            • 学习新技能或法术<br/>
+                            • 属性点分配和重新分配
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>📊 属性生成指令</h4>
+                            <div class="prompt-text">You are RPG character stats agent, generating starting stats for character according to game system, adventure and character description. Attributes and skills should be determined based on character description. Scale attributes, skills and abilities according to level and game system.
+
+Stats Generation Rules:
+- Generate appropriate starting attributes based on character description
+- Assign skills that match character background and class
+- Create balanced resource pools (health, mana, etc.)
+- Ensure stats fit the game system and power level
+- Provide starting equipment and abilities
+- Consider character level and experience
+- Balance offensive and defensive capabilities</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "level": "Character level",
+  "attributes": {
+    "strength": "Physical power",
+    "dexterity": "Agility and reflexes",
+    "constitution": "Health and endurance",
+    "intelligence": "Mental acuity",
+    "wisdom": "Perception and insight",
+    "charisma": "Social influence"
+  },
+  "skills": {
+    "skill_name": "skill_value"
+  },
+  "resources": {
+    "hp": {"current_value": X, "max_value": Y, "start_value": Z},
+    "mp": {"current_value": X, "max_value": Y, "start_value": Z}
+  },
+  "spells_and_abilities": ["List of spells and special abilities"]
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EventAgent -->
+                <div class="agent-card">
+                    <h3>EventAgent</h3>
+                    <p><strong>事件评估器</strong> - 分析故事中发生的重要事件，特别是角色成长、能力学习和重要情节发展的评估。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 故事中发生重要事件<br/>
+                            • 角色学习新能力或技能<br/>
+                            • 重要情节点达成<br/>
+                            • 需要评估事件影响
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>🎭 事件评估指令</h4>
+                            <div class="prompt-text">You are RPG event agent, evaluating events that happen in the story, especially character changes and new ability learning. Focus on events that are clearly described or strongly implied in the narrative.
+
+Event Evaluation Rules:
+- Identify significant character development moments
+- Recognize when new abilities or skills are learned
+- Evaluate the impact of major story events
+- Determine if events warrant mechanical changes
+- Focus on clearly described or strongly implied events
+- Avoid over-interpreting minor narrative details
+- Ensure events align with character progression</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "events_identified": [
+    {
+      "event_type": "character_growth|ability_learned|plot_advancement|other",
+      "description": "Description of the event",
+      "significance": "LOW|MEDIUM|HIGH",
+      "mechanical_impact": "Whether this event should affect game mechanics",
+      "reasoning": "Explanation for the evaluation"
+    }
+  ],
+  "character_changes": [
+    {
+      "change_type": "skill|ability|attribute|other",
+      "description": "What changed about the character",
+      "justification": "Why this change is warranted"
+    }
+  ]
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SummaryAgent -->
+                <div class="agent-card">
+                    <h3>SummaryAgent</h3>
+                    <p><strong>记忆管理器</strong> - 总结冗长的故事历史，提取关键细节，检索相关历史信息以保持故事连贯性。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 历史消息长度超过设定阈值<br/>
+                            • 需要检索相关历史信息<br/>
+                            • 保持长期故事连贯性<br/>
+                            • 优化内存使用和响应速度
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>📝 记忆管理指令</h4>
+                            <div class="prompt-text">You are RPG summary agent, summarizing story history to extract key details and relevant historical information for maintaining story coherence.
+
+Summary Rules:
+- Extract key plot points and character developments
+- Maintain important NPC relationships and interactions
+- Preserve crucial world-building details
+- Identify recurring themes and motifs
+- Summarize character growth and changes
+- Retain important item acquisitions and losses
+- Keep track of unresolved plot threads
+- Maintain geographical and temporal continuity</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "key_events": ["List of important events that occurred"],
+  "character_development": ["Significant character changes and growth"],
+  "npc_relationships": ["Important NPC interactions and relationships"],
+  "world_details": ["Relevant world-building information"],
+  "unresolved_plots": ["Plot threads that remain open"],
+  "important_items": ["Significant items acquired or lost"],
+  "location_history": ["Important locations visited"],
+  "summary": "Concise summary of the story so far"
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CampaignAgent -->
+                <div class="agent-card">
+                    <h3>CampaignAgent</h3>
+                    <p><strong>战役管理器</strong> - 管理长期剧情结构，创建章节化的冒险内容，监控故事进展，确保剧情按预定轨道发展。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • 创建新战役结构<br/>
+                            • 检查故事偏离预定轨道<br/>
+                            • 管理章节进度<br/>
+                            • 长期剧情规划
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>🗺️ 战役生成指令</h4>
+                            <div class="prompt-text">You are RPG campaign agent, creating epic campaigns with chapters, plot points, world details, and character descriptions.
+
+Campaign Creation Rules:
+- Create structured campaign with multiple chapters
+- Design interconnected plot points and story arcs
+- Establish clear objectives and progression paths
+- Create memorable NPCs and locations
+- Plan for character growth and development
+- Include variety in challenges and encounters
+- Ensure narrative coherence across chapters
+- Provide flexibility for player choices</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 JSON 响应格式</h4>
+                            <div class="prompt-text">JSON Response Format:
+{
+  "title": "Campaign title",
+  "description": "Overall campaign description",
+  "general_image_prompt": "Create a general system prompt max 10 words for this campaign",
+  "theme": "THEME of the story telling, e.g. world the story is located in",
+  "tonality": "TONALITY of the story telling, writing style, must fit GAME system",
+  "chapters": [
+    {
+      "chapterId": "number",
+      "title": "string",
+      "description": "string",
+      "objective": "string",
+      "plot_points": [
+        {
+          "plotId": "always start at 1 again for each new chapter",
+          "location": "string",
+          "description": "string",
+          "objective": "string",
+          "important_NPCs": "String Array; No object, just one descriptive String per NPC",
+          "game_master_notes": "string array; rules how specific obstacles must be solved"
+        }
+      ]
+    }
+  ]
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JsonFixingInterceptorAgent -->
+                <div class="agent-card">
+                    <h3>JsonFixingInterceptorAgent</h3>
+                    <p><strong>JSON 修复器</strong> - 专门处理 JSON 解析错误，修复格式问题，确保系统间的数据交换正常进行。</p>
+                    <div class="trigger-section">
+                        <h4>🎯 触发条件</h4>
+                        <div class="trigger-text">
+                            • JSON 解析失败时<br/>
+                            • 格式错误需要修复<br/>
+                            • 数据结构不匹配<br/>
+                            • 确保系统稳定性
+                        </div>
+                    </div>
+                    <button class="collapsible">📋 完整系统指令</button>
+                    <div class="content">
+                        <div class="prompt-section">
+                            <h4>🔧 JSON 修复指令</h4>
+                            <div class="prompt-text">You are a JSON fixing agent responsible for repairing JSON errors. You only return the fixed JSON without explaining the errors.
+
+JSON Fixing Rules:
+- Fix syntax errors in JSON format
+- Correct missing or extra commas, brackets, and quotes
+- Ensure proper JSON structure and formatting
+- Maintain original data content while fixing format
+- Return only valid, parseable JSON
+- Do not add explanations or comments
+- Preserve all original data values
+- Fix encoding and escape character issues</div>
+                        </div>
+                        <div class="prompt-section">
+                            <h4>📊 修复方法</h4>
+                            <div class="prompt-text">Fixing Methods:
+- Parse and identify JSON syntax errors
+- Correct malformed strings and escape characters
+- Fix missing or misplaced punctuation
+- Ensure proper nesting of objects and arrays
+- Validate and correct data types
+- Remove invalid characters and formatting
+- Ensure UTF-8 encoding compliance
+- Return clean, valid JSON structure</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 系统架构特点 -->
+        <div class="section">
+            <h2>🏗️ 系统架构特点</h2>
+            <div class="architecture-features">
+                <div class="feature-card">
+                    <h4>🎯 核心协调模式</h4>
+                    <p>GameAgent 作为中央协调器，统一管理所有其他 Agent 的调用和数据流转，确保系统的一致性和稳定性。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🤖 LLM 驱动架构</h4>
+                    <p>每个 Agent 都基于大语言模型，通过精心设计的系统提示词来实现特定功能，具有高度的智能性和适应性。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔧 模块化设计</h4>
+                    <p>各 Agent 职责明确，功能独立，便于维护和扩展。每个模块都可以独立优化而不影响其他部分。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 状态管理</h4>
+                    <p>通过 JSON 格式统一数据交换，确保各 Agent 间的状态同步和数据一致性。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🛡️ 错误处理</h4>
+                    <p>JsonFixingInterceptorAgent 提供专门的错误恢复机制，确保系统在遇到格式问题时能够自动修复。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧠 记忆管理</h4>
+                    <p>SummaryAgent 实现智能的历史信息压缩和检索，平衡了记忆容量和响应速度。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ 事件驱动</h4>
+                    <p>基于游戏状态变化触发相应 Agent，实现高效的资源利用和响应机制。</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎮 游戏专业化</h4>
+                    <p>专门为 RPG 游戏设计，每个 Agent 都针对特定的游戏机制和需求进行了优化。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 依赖关系图 -->
+        <div class="section">
+            <h2>🔗 Agent 依赖关系图</h2>
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    graph LR
+                        GameAgent[GameAgent<br/>核心协调器] --> ActionAgent[ActionAgent<br/>动作生成]
+                        GameAgent --> CombatAgent[CombatAgent<br/>战斗处理]
+                        GameAgent --> EventAgent[EventAgent<br/>事件评估]
+                        GameAgent --> SummaryAgent[SummaryAgent<br/>记忆管理]
+                        GameAgent --> JsonFixingAgent[JsonFixingAgent<br/>JSON修复]
+                        
+                        StoryAgent[StoryAgent<br/>故事设定] --> GameAgent
+                        CharacterAgent[CharacterAgent<br/>角色描述] --> GameAgent
+                        CharacterStatsAgent[CharacterStatsAgent<br/>属性管理] --> GameAgent
+                        CampaignAgent[CampaignAgent<br/>战役管理] --> GameAgent
+                        
+                        StoryAgent --> CharacterStatsAgent
+                        CharacterAgent --> CharacterStatsAgent
+                        
+                        CampaignAgent --> GameAgent
+                        
+                        style GameAgent fill:#e0f2f1,stroke:#4caf50,stroke-width:3px
+                        style ActionAgent fill:#fce4ec,stroke:#e91e63,stroke-width:2px
+                        style CombatAgent fill:#ffebee,stroke:#f44336,stroke-width:2px
+                        style EventAgent fill:#f1f8e9,stroke:#8bc34a,stroke-width:2px
+                        style SummaryAgent fill:#fafafa,stroke:#9e9e9e,stroke-width:2px
+                        style JsonFixingAgent fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+                        style StoryAgent fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+                        style CharacterAgent fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+                        style CharacterStatsAgent fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+                        style CampaignAgent fill:#fff8e1,stroke:#ffc107,stroke-width:2px
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        // 折叠功能
+        document.addEventListener('DOMContentLoaded', function() {
+            var coll = document.getElementsByClassName("collapsible");
+            for (var i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    content.classList.toggle("show");
+                });
+            }
+        });
+    </script>
+</body>
+</html>

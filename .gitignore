@@ -28,3 +28,4 @@ test-results/.last-run.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+AGENT_ANALYSIS.md
