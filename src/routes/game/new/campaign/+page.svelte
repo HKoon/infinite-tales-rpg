@@ -24,8 +24,8 @@
 	import { type Story } from '$lib/ai/agents/storyAgent';
 	import { beforeNavigate } from '$app/navigation';
 	import type { AIConfig } from '$lib';
-	import backgroundImage from '$lib/assets/background.jpg';
-	import logo from '$lib/assets/logo.png';
+	import backgroundImage from '$lib/assets/bckg.svg';
+	import logo from '$lib/assets/logo.jpeg';
 	import { showSettings } from '$lib/stores/showSettings';
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
@@ -217,18 +217,17 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 							stroke-width="2"
-							d="M4 6h16M4 12h8m-8 6h16"
-						/>
-					</svg>
-				</div>
-				<ul
-					tabindex="0"
-					class="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow"
-				>
-					<li><a href="/game">Game</a></li>
-					<li><a href="/game/character">Character</a></li>
-					<li><a href="/game/settings">Settings</a></li>
-				</ul>
+						d="M4 6h16M4 12h8m-8 6h16"
+					/>
+				</svg>
+			</div>
+			<ul
+				class="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow"
+			>
+				<li><a href="/game">Game</a></li>
+				<li><a href="/game/character">Character</a></li>
+				<li><a href="/game/settings">Settings</a></li>
+			</ul>
 			</div>
 			<a href="/" class="btn btn-ghost text-xl">
 				<img src={logo} alt="Logo" class="h-8 w-8" />
@@ -243,7 +242,11 @@
 			</ul>
 		</div>
 		<div class="navbar-end">
-			<button class="btn btn-ghost" onclick={() => ($showSettings = !$showSettings)}>
+			<button
+				aria-label="Settings"
+				class="btn btn-ghost"
+				onclick={() => ($showSettings = !$showSettings)}
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5"

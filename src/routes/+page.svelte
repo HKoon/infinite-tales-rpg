@@ -78,6 +78,7 @@
 			</div>
 			<div class="relative">
 				<button
+					aria-label="Settings"
 					onclick={() => showSettings = !showSettings}
 					class="text-white hover:text-red-200 transition-colors duration-200"
 				>

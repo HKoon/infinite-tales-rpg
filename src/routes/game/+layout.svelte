@@ -59,11 +59,12 @@
 	<div class="relative z-10">
 		<!-- Top Navigation Bar -->
 		<nav class="flex justify-between items-center p-6">
-			<div class="flex items-center">
+			<a href="/" class="flex items-center">
 				<img src={logoSvg} alt="Roll Role Logo" class="h-12 w-auto mr-4" />
-			</div>
+			</a>
 			<div class="relative">
 				<button
+					aria-label="Settings"
 					onclick={() => showSettings = !showSettings}
 					class="text-white hover:text-red-200 transition-colors duration-200"
 				>
