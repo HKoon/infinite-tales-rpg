@@ -26,7 +26,7 @@
 	import type { AIConfig } from '$lib';
 	import backgroundImage from '$lib/assets/bckg.svg';
 	import logo from '$lib/assets/logo.jpeg';
-	import { showSettings } from '$lib/stores/showSettings';
+	import { showSettings } from '$lib/state/showSettings.svelte';
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
