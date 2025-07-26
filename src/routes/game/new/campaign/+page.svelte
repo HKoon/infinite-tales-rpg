@@ -26,7 +26,7 @@
 	import type { AIConfig } from '$lib';
 	import backgroundImage from '$lib/assets/bckg.svg';
 	import logo from '$lib/assets/logo.jpeg';
-	import { showSettings } from '$lib/state/showSettings.svelte';
+	let showSettings = $state(false);
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
@@ -245,7 +245,7 @@
 			<button
 				aria-label="Settings"
 				class="btn btn-ghost"
-				onclick={() => ($showSettings = !$showSettings)}
+				onclick={() => (showSettings = !showSettings)}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
