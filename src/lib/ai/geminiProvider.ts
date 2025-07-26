@@ -166,31 +166,28 @@ export class GeminiProvider extends LLM {
 					'You have reached the rate limit for the Gemini AI. Please try again in some minutes. If this still appears, the whole daily quota is used up :(';
 			}
 			// Handle network connection issues and browser extension interference
-			if (e.message.includes('Failed to fetch') || 
-				e.message.includes('NetworkError') || 
+			if (
+				e.message.includes('Failed to fetch') ||
+				e.message.includes('NetworkError') ||
 				e.message.includes('TypeError: Failed to fetch') ||
 				e.message.includes('fetch failed') ||
 				e.message.includes('ERR_NETWORK') ||
-				e.message.includes('ERR_INTERNET_DISCONNECTED')) {
-				
+				e.message.includes('ERR_INTERNET_DISCONNECTED')
+			) {
 				console.error('Network error detected:', e.message);
-				
-				const networkErrorMessage = 
-					'网络连接失败！这可能是由于以下原因：\n' +
-					'1. 浏览器扩展程序干扰了网络请求（请尝试禁用广告拦截器或其他扩展）\n' +
-					'2. 网络连接不稳定\n' +
-					'3. 防火墙或代理设置阻止了请求\n' +
-					'4. API密钥可能已过期或无效\n' +
-					'5. Chrome扩展程序可能正在拦截请求\n\n' +
-					'建议解决方案：\n' +
-					'- 刷新页面重试\n' +
-					'- 检查网络连接\n' +
-					'- 暂时禁用浏览器扩展（特别是广告拦截器）\n' +
-					'- 尝试使用无痕模式\n' +
-					'- 验证API密钥是否正确\n' +
-					'- 检查是否有防火墙阻止了请求';
-				errorState.setNetworkError(networkErrorMessage);
-				return undefined;
+				if (!this.fallbackLLM) {
+					const networkErrorMessage =
+						'网络连接失败！这可能是由于以下原因：\n' +
+						'1. **网络连接问题**：请检查您的网络连接是否正常。\n' +
+						'2. **浏览器扩展程序**：某些浏览器扩展程序（如广告拦截器或安全插件）可能会干扰网络请求。请尝试在无痕模式下运行或禁用可疑的扩展程序。\n' +
+						'3. **防火墙或代理**：公司或个人防火墙/代理设置可能会阻止对 Gemini API 的访问。\n' +
+						'4. **CORS 策略**：如果直接在浏览器中调用，浏览器的同源策略可能会阻止请求。';
+
+					errorState.setNetworkError(networkErrorMessage);
+					return undefined;
+				} else {
+					e.message = 'Network request failed. Attempting to use fallback LLM.';
+				}
 			}
 			if (this.fallbackLLM) {
 				console.log('Fallback LLM for error: ', e.message);
