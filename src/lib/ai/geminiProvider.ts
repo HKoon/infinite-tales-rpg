@@ -99,6 +99,43 @@ export class GeminiProvider extends LLM {
 		return 2;
 	}
 
+	private async retryWithBackoff<T>(
+		operation: () => Promise<T>,
+		maxRetries: number = 3,
+		baseDelay: number = 1000
+	): Promise<T> {
+		let lastError: Error;
+		
+		for (let attempt = 0; attempt <= maxRetries; attempt++) {
+			try {
+				return await operation();
+			} catch (error) {
+				lastError = error as Error;
+				
+				// Don't retry for certain types of errors
+				if (error instanceof Error) {
+					if (error.message.includes('API key not valid') || 
+						error.message.includes('429') ||
+						error.message.includes('401')) {
+						throw error;
+					}
+				}
+				
+				// If this is the last attempt, throw the error
+				if (attempt === maxRetries) {
+					throw lastError;
+				}
+				
+				// Wait before retrying with exponential backoff
+				const delay = baseDelay * Math.pow(2, attempt);
+				console.log(`API call failed, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries + 1})`);
+				await new Promise(resolve => setTimeout(resolve, delay));
+			}
+		}
+		
+		throw lastError!;
+	}
+
 	private shouldEarlyFallback(modelToUse: string): boolean {
 		return this.fallbackLLM !== undefined && this.isThinkingModel(modelToUse) && getIsGeminiThinkingOverloaded();
 	}
@@ -126,6 +163,22 @@ export class GeminiProvider extends LLM {
 			if (e.message.includes('429')) {
 				e.message =
 					'You have reached the rate limit for the Gemini AI. Please try again in some minutes. If this still appears, the whole daily quota is used up :(';
+			}
+			// Handle network connection issues and browser extension interference
+			if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError') || e.message.includes('TypeError: Failed to fetch')) {
+				const networkErrorMessage = 
+					'网络连接失败！这可能是由于以下原因：\n' +
+					'1. 浏览器扩展程序干扰了网络请求（请尝试禁用广告拦截器或其他扩展）\n' +
+					'2. 网络连接不稳定\n' +
+					'3. 防火墙或代理设置阻止了请求\n' +
+					'4. API密钥可能已过期或无效\n\n' +
+					'建议解决方案：\n' +
+					'- 刷新页面重试\n' +
+					'- 检查网络连接\n' +
+					'- 暂时禁用浏览器扩展\n' +
+					'- 验证API密钥是否正确';
+				errorState.setNetworkError(networkErrorMessage);
+				return undefined;
 			}
 			if (this.fallbackLLM) {
 				console.log('Fallback LLM for error: ', e.message);
@@ -263,7 +316,10 @@ export class GeminiProvider extends LLM {
 			if (request.stream) {
 				return this.genAI.models.generateContentStream(genAIRequest) as any;
 			} else {
-				result = await this.genAI.models.generateContent(genAIRequest);
+				// Use retry mechanism for non-streaming requests
+				result = await this.retryWithBackoff(async () => {
+					return await this.genAI.models.generateContent(genAIRequest);
+				});
 			}
 		} catch (e) {
 			return await this.handleGeminiError(

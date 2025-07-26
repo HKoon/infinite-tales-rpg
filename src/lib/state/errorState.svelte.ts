@@ -3,12 +3,23 @@ class ErrorState {
 	code = $state();
 	exception = $state();
 	retryable = $state();
+	isNetworkError = $state(false);
+	showTroubleshooting = $state(false);
 
 	clear = () => {
 		this.userMessage = undefined;
 		this.code = undefined;
 		this.exception = undefined;
 		this.retryable = undefined;
+		this.isNetworkError = false;
+		this.showTroubleshooting = false;
+	};
+
+	setNetworkError = (message: string) => {
+		this.userMessage = message;
+		this.isNetworkError = true;
+		this.retryable = true;
+		this.showTroubleshooting = true;
 	};
 }
 
