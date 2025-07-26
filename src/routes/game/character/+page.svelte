@@ -15,98 +15,103 @@
 </script>
 
 {#if characterState.value}
-	<div
-		class="menu-content flex min-h-screen items-center justify-center p-4 text-center"
-		id="stats"
-	>
-		<div class="character-profile w-full max-w-lg rounded-lg text-white shadow-lg">
-			<h1 id="name" class="class mb-4 border-b border-gray-600 text-center text-3xl font-bold">
-				{characterState.value.name}
-			</h1>
-			{#if !aiConfigState.value?.disableImagesState}
-				<div class="m-auto flex w-full flex-col">
-					<AIGeneratedImage
-						storageKey="characterImageState"
-						imagePrompt="{storyState.value.general_image_prompt} {characterState.value.appearance}"
-					></AIGeneratedImage>
-				</div>
-			{/if}
-			<div class="section mb-6">
-				<h2 class="mb-2 mt-2 border-b border-gray-600 pb-1 text-xl font-semibold">
-					Basic Information
-				</h2>
-				<div class="flex flex-col space-y-1 text-start">
-					<p><strong>Race:</strong> <span id="race">{characterState.value.race}</span></p>
-					<p><strong>Gender:</strong> <span id="gender">{characterState.value.gender}</span></p>
-					<p><strong>Class:</strong> <span id="class">{characterState.value.class}</span></p>
-					<p><strong>Level:</strong> <span id="class">{characterStatsState.value.level}</span></p>
-					{#each Object.entries(characterStatsState.value.resources || {}) as [resourceKey, resourceValue] (resourceKey)}
-						<output class="capitalize">
-							Max. {resourceKey.replaceAll('_', ' ')}: {resourceValue.max_value}
-						</output>
-					{/each}
-					<p>
-						<strong>Alignment:</strong> <span id="alignment">{characterState.value.alignment}</span>
-					</p>
-					<p>
-						<strong>Background:</strong>
-						<span id="background">{characterState.value.background}</span>
-					</p>
-				</div>
-			</div>
 
-			<div class="section mb-6">
-				<h2 class="class mb-2 border-b border-gray-600 pb-1 text-xl font-semibold">Appearance</h2>
-				<p id="appearance">{characterState.value.appearance}</p>
-			</div>
-
-			<div class="section mb-6">
-				<h2 class="class mb-2 border-b border-gray-600 pb-1 text-xl font-semibold">Personality</h2>
-				<p id="personality">{characterState.value.personality}</p>
-			</div>
-
-			<div class="section mb-6">
-				<h2 class="class mb-2 border-b border-gray-600 pb-1 text-xl font-semibold">Motivation</h2>
-				<p id="motivation">{characterState.value.motivation}</p>
-			</div>
-
-			<div class="section mb-6">
-				<h2 class="class mb-2 border-b border-gray-600 pb-1 text-xl font-semibold">Attributes</h2>
-				<ul id="attributes" class="class list-inside items-center justify-center">
-					{#each Object.entries(characterStatsState.value.attributes || {}) as [attributeName, attributeValue] (attributeName)}
-						<li class="mt-3 flex flex-col">
-							<strong class="m-auto w-full text-center capitalize"
-								>{attributeName.replace(/_/g, ' ')}: {attributeValue}</strong
-							>
-						</li>
-					{/each}
-				</ul>
-			</div>
-			<div class="section mb-6">
-				<h2 class="class mb-2 border-b border-gray-600 pb-1 text-xl font-semibold">Skills</h2>
-				<ul id="skills" class="class list-inside items-center justify-center">
-					{#each Object.entries(characterStatsState.value.skills || {}) as [skillName, skillValue] (skillName)}
-						<li class="mt-3 flex flex-col">
-							<strong class="m-auto w-full text-center capitalize"
-								>{skillName.replace(/_/g, ' ')}: {skillValue}</strong
-							>
-							<div class="flex w-full">
-								<small class="mr-auto">
-									{skillsProgressionState.value[skillName] || 0}
-								</small>
-								<small class="ml-auto">
-									{getRequiredSkillProgression(skillName, characterStatsState.value)}
-								</small>
+			<!-- Character Profile Content -->
+			<div class="container mx-auto px-6 py-12">
+				<div class="max-w-4xl mx-auto bg-black bg-opacity-70 p-8 rounded-lg">
+					<div class="character-profile text-white">
+						<h1 class="text-4xl font-bold text-center mb-6 border-b border-gray-600 pb-4 font-jaro">
+							{characterState.value.name}
+						</h1>
+						
+						{#if !aiConfigState.value?.disableImagesState}
+							<div class="flex justify-center mb-8">
+								<div class="w-64 h-64 rounded-lg overflow-hidden">
+									<AIGeneratedImage
+										storageKey="characterImageState"
+										imagePrompt="{storyState.value.general_image_prompt} {characterState.value.appearance}"
+									></AIGeneratedImage>
+								</div>
 							</div>
-							<progress
-								class="progress progress-success w-full"
-								value={skillsProgressionState.value[skillName] || -1}
-								max={getRequiredSkillProgression(skillName, characterStatsState.value) || -1}
-							></progress>
-						</li>
-					{/each}
-				</ul>
+						{/if}
+
+						<div class="grid md:grid-cols-2 gap-8">
+							<!-- Basic Information -->
+							<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+								<h2 class="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2 text-red-300">
+									Basic Information
+								</h2>
+								<div class="space-y-3">
+									<p><strong class="text-red-200">Race:</strong> <span class="text-white">{characterState.value.race}</span></p>
+									<p><strong class="text-red-200">Gender:</strong> <span class="text-white">{characterState.value.gender}</span></p>
+									<p><strong class="text-red-200">Class:</strong> <span class="text-white">{characterState.value.class}</span></p>
+									<p><strong class="text-red-200">Level:</strong> <span class="text-white">{characterStatsState.value.level}</span></p>
+									{#each Object.entries(characterStatsState.value.resources || {}) as [resourceKey, resourceValue] (resourceKey)}
+										<p class="capitalize">
+											<strong class="text-red-200">Max. {resourceKey.replaceAll('_', ' ')}:</strong> <span class="text-white">{resourceValue.max_value}</span>
+										</p>
+									{/each}
+									<p><strong class="text-red-200">Alignment:</strong> <span class="text-white">{characterState.value.alignment}</span></p>
+									<p><strong class="text-red-200">Background:</strong> <span class="text-white">{characterState.value.background}</span></p>
+								</div>
+							</div>
+
+							<!-- Attributes -->
+							<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+								<h2 class="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2 text-red-300">Attributes</h2>
+								<div class="grid grid-cols-2 gap-3">
+									{#each Object.entries(characterStatsState.value.attributes || {}) as [attributeName, attributeValue] (attributeName)}
+										<div class="bg-gray-700 bg-opacity-50 p-3 rounded text-center">
+											<div class="text-red-200 text-sm capitalize">{attributeName.replace(/_/g, ' ')}</div>
+											<div class="text-white text-xl font-bold">{attributeValue}</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						</div>
+
+						<!-- Character Details -->
+						<div class="grid md:grid-cols-3 gap-6 mt-8">
+							<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+								<h2 class="text-xl font-semibold mb-3 border-b border-gray-600 pb-2 text-red-300">Appearance</h2>
+								<p class="text-gray-200">{characterState.value.appearance}</p>
+							</div>
+
+							<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+								<h2 class="text-xl font-semibold mb-3 border-b border-gray-600 pb-2 text-red-300">Personality</h2>
+								<p class="text-gray-200">{characterState.value.personality}</p>
+							</div>
+
+							<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+								<h2 class="text-xl font-semibold mb-3 border-b border-gray-600 pb-2 text-red-300">Motivation</h2>
+								<p class="text-gray-200">{characterState.value.motivation}</p>
+							</div>
+						</div>
+
+						<!-- Skills -->
+						<div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg mt-8">
+							<h2 class="text-2xl font-semibold mb-4 border-b border-gray-600 pb-2 text-red-300">Skills</h2>
+							<div class="grid md:grid-cols-2 gap-4">
+								{#each Object.entries(characterStatsState.value.skills || {}) as [skillName, skillValue] (skillName)}
+									<div class="bg-gray-700 bg-opacity-50 p-4 rounded">
+										<div class="flex justify-between items-center mb-2">
+											<strong class="text-white capitalize">{skillName.replace(/_/g, ' ')}: {skillValue}</strong>
+										</div>
+										<div class="flex justify-between text-sm text-gray-300 mb-1">
+											<span>{skillsProgressionState.value[skillName] || 0}</span>
+											<span>{getRequiredSkillProgression(skillName, characterStatsState.value)}</span>
+										</div>
+										<div class="w-full bg-gray-600 rounded-full h-2">
+											<div 
+												class="bg-green-500 h-2 rounded-full transition-all duration-300" 
+												style="width: {((skillsProgressionState.value[skillName] || 0) / (getRequiredSkillProgression(skillName, characterStatsState.value) || 1)) * 100}%"
+											></div>
+										</div>
+									</div>
+								{/each}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
-		</div>
-	</div>
 {/if}

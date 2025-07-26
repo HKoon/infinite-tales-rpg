@@ -102,128 +102,133 @@
 {#if isGeneratingState}
 	<LoadingModal />
 {/if}
-<ul class="steps mt-3 w-full">
-	<!--TODO  -->
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<!-- svelte-ignore a11y_click_events_have_key_events  -->
-	{#if campaignState.value?.campaign_title}
-		<li class="step step-primary cursor-pointer" onclick={() => goto('campaign')}>Campaign</li>
-	{:else}
-		<li class="step step-primary cursor-pointer" onclick={() => goto('tale')}>Tale</li>
-	{/if}
-	<li class="step step-primary">Character</li>
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<!-- svelte-ignore a11y_click_events_have_key_events  -->
-	<li class="step cursor-pointer" onclick={() => goto('characterStats')}>Stats</li>
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<!-- svelte-ignore a11y_click_events_have_key_events  -->
-	<li class="step cursor-pointer" onclick={() => goto('characterStats')}>Start</li>
-</ul>
-<form class="m-6 grid items-center gap-2 text-center">
-	<p>Click on Randomize All to generate a random Character based on the Tale settings</p>
-	<button
-		class="btn btn-accent m-auto mt-3 w-3/4 sm:w-1/2"
-		disabled={isGeneratingState}
-		onclick={onRandomize}
-	>
-		Randomize All
-	</button>
-	<button
-		class="btn btn-neutral m-auto w-3/4 sm:w-1/2"
-		onclick={() => {
-			characterState.reset();
-			characterStateOverwrites = {};
-			resetImageState = true;
-		}}
-	>
-		Clear All
-	</button>
-	{#if campaignState.value?.campaign_title}
-		<button
-			class="btn btn-primary m-auto w-3/4 sm:w-1/2"
-			onclick={() => {
-				navigate('/new/campaign');
-			}}
-		>
-			Previous Step:<br /> Customize Campaign
-		</button>
-	{:else}
-		<button
-			class="btn btn-primary m-auto w-3/4 sm:w-1/2"
-			onclick={() => {
-				navigate('/new/tale');
-			}}
-		>
-			Previous Step:<br /> Customize Tale
-		</button>
-	{/if}
 
-	<button
-		class="btn btn-primary m-auto w-3/4 sm:w-1/2"
-		onclick={() => {
-			navigate('/new/characterStats');
-		}}
-		disabled={isEqual(characterState.value, initialCharacterState)}
-	>
-		Next Step:<br /> Customize Stats & Abilities
-	</button>
-
-	{#each Object.keys(characterState.value) as stateValue}
-		<label class="form-control mt-3 w-full">
-			<div class="flex-row capitalize">
-				{stateValue.replaceAll('_', ' ')}
-				{#if characterStateOverwrites[stateValue]}
-					<span class="badge badge-accent ml-2">overwritten</span>
-				{/if}
-			</div>
-			<textarea
-				bind:value={characterState.value[stateValue]}
-				rows={textAreaRowsDerived ? textAreaRowsDerived[stateValue] : 2}
-				placeholder=""
-				oninput={(evt) => {
-					characterStateOverwrites[stateValue] = evt.currentTarget.value;
-				}}
-				class="textarea textarea-bordered textarea-md mt-2 w-full"
+<div class="min-h-screen">
+	<div class="container mx-auto px-4 py-8">
+		<ul class="steps mt-3 w-full">
+			<!--TODO  -->
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<!-- svelte-ignore a11y_click_events_have_key_events  -->
+			{#if campaignState.value?.campaign_title}
+				<li class="step step-primary cursor-pointer" onclick={() => goto('campaign')}>Campaign</li>
+			{:else}
+				<li class="step step-primary cursor-pointer" onclick={() => goto('tale')}>Tale</li>
+			{/if}
+			<li class="step step-primary">Character</li>
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<!-- svelte-ignore a11y_click_events_have_key_events  -->
+			<li class="step cursor-pointer" onclick={() => goto('characterStats')}>Stats</li>
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<!-- svelte-ignore a11y_click_events_have_key_events  -->
+			<li class="step cursor-pointer" onclick={() => goto('characterStats')}>Start</li>
+		</ul>
+		<form class="m-6 grid items-center gap-2 text-center">
+			<p class="text-white">Click on Randomize All to generate a random Character based on the Tale settings</p>
+			<button
+				class="btn btn-accent m-auto mt-3 w-3/4 sm:w-1/2"
+				disabled={isGeneratingState}
+				onclick={onRandomize}
 			>
-			</textarea>
-		</label>
-		<button
-			class="btn btn-accent m-auto mt-2 w-3/4 capitalize sm:w-1/2"
-			onclick={() => {
-				onRandomizeSingle(stateValue);
-			}}
-		>
-			Randomize {stateValue.replaceAll('_', ' ')}
-		</button>
-		<button
-			class="btn btn-neutral m-auto mt-2 w-3/4 capitalize sm:w-1/2"
-			onclick={() => {
-				characterState.resetProperty(stateValue);
-				delete characterStateOverwrites[stateValue];
-				if (stateValue === 'appearance') {
+				Randomize All
+			</button>
+			<button
+				class="btn btn-neutral m-auto w-3/4 sm:w-1/2"
+				onclick={() => {
+					characterState.reset();
+					characterStateOverwrites = {};
 					resetImageState = true;
-				}
-			}}
-		>
-			Clear {stateValue.replaceAll('_', ' ')}
-		</button>
-		{#if !aiConfigState.value?.disableImagesState && stateValue === 'appearance'}
-			<div class="m-auto flex w-full flex-col">
-				<AIGeneratedImage
-					storageKey="characterImageState"
-					{resetImageState}
-					imagePrompt="{storyState.value.general_image_prompt} {characterState.value.appearance}"
-				/>
-			</div>
-		{/if}
-	{/each}
-	<button
-		class="btn btn-primary m-auto w-3/4 sm:w-1/2"
-		onclick={() => {
-			navigate('/new/characterStats');
-		}}
-		disabled={isEqual(characterState.value, initialCharacterState)}
-	>
-		Next Step:<br /> Customize Stats & Abilities
-	</button>
-</form>
+				}}
+			>
+				Clear All
+			</button>
+			{#if campaignState.value?.campaign_title}
+				<button
+					class="btn btn-primary m-auto w-3/4 sm:w-1/2"
+					onclick={() => {
+						navigate('/new/campaign');
+					}}
+				>
+					Previous Step:<br /> Customize Campaign
+				</button>
+			{:else}
+				<button
+					class="btn btn-primary m-auto w-3/4 sm:w-1/2"
+					onclick={() => {
+						navigate('/new/tale');
+					}}
+				>
+					Previous Step:<br /> Customize Tale
+				</button>
+			{/if}
+
+			<button
+				class="btn btn-primary m-auto w-3/4 sm:w-1/2"
+				onclick={() => {
+					navigate('/new/characterStats');
+				}}
+				disabled={isEqual(characterState.value, initialCharacterState)}
+			>
+				Next Step:<br /> Customize Stats & Abilities
+			</button>
+
+			{#each Object.keys(characterState.value) as stateValue}
+				<label class="form-control mt-3 w-full">
+					<div class="flex-row capitalize text-white">
+						{stateValue.replaceAll('_', ' ')}
+						{#if characterStateOverwrites[stateValue]}
+							<span class="badge badge-accent ml-2">overwritten</span>
+						{/if}
+					</div>
+					<textarea
+						bind:value={characterState.value[stateValue]}
+						rows={textAreaRowsDerived ? textAreaRowsDerived[stateValue] : 2}
+						placeholder=""
+						oninput={(evt) => {
+							characterStateOverwrites[stateValue] = evt.currentTarget.value;
+						}}
+						class="textarea textarea-bordered textarea-md mt-2 w-full bg-black/60 text-white placeholder-gray-400"
+					>
+					</textarea>
+				</label>
+				<button
+					class="btn btn-accent m-auto mt-2 w-3/4 capitalize sm:w-1/2"
+					onclick={() => {
+						onRandomizeSingle(stateValue);
+					}}
+				>
+					Randomize {stateValue.replaceAll('_', ' ')}
+				</button>
+				<button
+					class="btn btn-neutral m-auto mt-2 w-3/4 capitalize sm:w-1/2"
+					onclick={() => {
+						characterState.resetProperty(stateValue);
+						delete characterStateOverwrites[stateValue];
+						if (stateValue === 'appearance') {
+							resetImageState = true;
+						}
+					}}
+				>
+					Clear {stateValue.replaceAll('_', ' ')}
+				</button>
+				{#if !aiConfigState.value?.disableImagesState && stateValue === 'appearance'}
+					<div class="m-auto flex w-full flex-col">
+						<AIGeneratedImage
+							storageKey="characterImageState"
+							{resetImageState}
+							imagePrompt="{storyState.value.general_image_prompt} {characterState.value.appearance}"
+						/>
+					</div>
+				{/if}
+			{/each}
+			<button
+				class="btn btn-primary m-auto w-3/4 sm:w-1/2"
+				onclick={() => {
+					navigate('/new/characterStats');
+				}}
+				disabled={isEqual(characterState.value, initialCharacterState)}
+			>
+				Next Step:<br /> Customize Stats & Abilities
+			</button>
+		</form>
+	</div>
+</div>

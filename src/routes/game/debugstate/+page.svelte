@@ -8,6 +8,14 @@
 	let thoughtsState = useLocalStorage<ThoughtsState>('thoughtsState', initialThoughtsState);
 </script>
 
+
+
+	<!-- Main Content -->
+	<div class="container mx-auto px-4 py-8">
+		<div class="card bg-base-100/90 shadow-xl backdrop-blur-sm">
+			<div class="card-body">
+				<h1 class="card-title text-center text-3xl font-bold">Debug State</h1>
+
 <details class="menu collapse collapse-arrow menu-vertical mt-7 bg-base-200">
 	<summary class="collapse-title text-lg font-bold capitalize">
 		<p class="text-center">NPC State</p>
@@ -53,3 +61,7 @@
 	</summary>
 	<output style="white-space: pre-wrap">{thoughtsState.value.eventThoughts}</output>
 </details>
+
+			</div>
+		</div>
+	</div>

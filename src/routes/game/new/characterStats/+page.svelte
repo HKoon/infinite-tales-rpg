@@ -1,25 +1,25 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { Campaign } from '$lib/ai/agents/campaignAgent';
-	import { initialCharacterState, type CharacterDescription } from '$lib/ai/agents/characterAgent';
-	import {
-		CharacterStatsAgent,
-		initialCharacterStatsState,
-		type CharacterStats,
-		type Ability,
-		type Resource
-	} from '$lib/ai/agents/characterStatsAgent';
-	import { type Story, initialStoryState } from '$lib/ai/agents/storyAgent';
-	import { LLMProvider } from '$lib/ai/llmProvider';
-	import { useLocalStorage } from '$lib/state/useLocalStorage.svelte';
-	import { navigate, parseState, removeEmptyValues } from '$lib/util.svelte';
-	import { onMount } from 'svelte';
-	import cloneDeep from 'lodash/cloneDeep';
-	import isEqual from 'lodash/isEqual';
-	import LoadingModal from '$lib/components/LoadingModal.svelte';
-	import { defaultGameSettings, type GameSettings } from '$lib/ai/agents/gameAgent';
-	import type { AIConfig } from '$lib';
-	import AbilityEditor from '$lib/components/interaction_modals/character/AbilityEditor.svelte';
+import type { Campaign } from '$lib/ai/agents/campaignAgent';
+import { initialCharacterState, type CharacterDescription } from '$lib/ai/agents/characterAgent';
+import {
+	CharacterStatsAgent,
+	initialCharacterStatsState,
+	type CharacterStats,
+	type Ability,
+	type Resource
+} from '$lib/ai/agents/characterStatsAgent';
+import { type Story, initialStoryState } from '$lib/ai/agents/storyAgent';
+import { LLMProvider } from '$lib/ai/llmProvider';
+import { useLocalStorage } from '$lib/state/useLocalStorage.svelte';
+import { navigate, parseState, removeEmptyValues } from '$lib/util.svelte';
+import { onMount } from 'svelte';
+import cloneDeep from 'lodash/cloneDeep';
+import isEqual from 'lodash/isEqual';
+import LoadingModal from '$lib/components/LoadingModal.svelte';
+import { defaultGameSettings, type GameSettings } from '$lib/ai/agents/gameAgent';
+import type { AIConfig } from '$lib';
+import AbilityEditor from '$lib/components/interaction_modals/character/AbilityEditor.svelte';
 
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
@@ -267,6 +267,13 @@
 		};
 	}
 </script>
+
+<div class="min-h-screen">
+	<!-- Main Content -->
+	<div class="container mx-auto px-4 py-8">
+		<div class="card bg-base-100/90 shadow-xl backdrop-blur-sm">
+			<div class="card-body">
+				<h1 class="card-title text-center text-3xl font-bold">Character Stats</h1>
 
 <ul class="steps mt-3 w-full">
 	<!--TODO  -->
@@ -625,6 +632,10 @@
 
 	{@render navigation(true)}
 </form>
+			</div>
+		</div>
+	</div>
+</div>
 {#snippet navigation(isLast?: boolean)}
 	<div class="card-actions m-auto mt-4 flex w-full flex-col sm:flex-row">
 		{#if !isLast}

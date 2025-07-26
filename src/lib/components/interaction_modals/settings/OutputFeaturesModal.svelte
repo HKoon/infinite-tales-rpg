@@ -19,9 +19,26 @@
 	let ttsVoices: Voice[] = $state([]);
 
 	onMount(async () => {
-		ttsVoices = (await (await fetch('/api/edgeTTSStream/voices')).json()).sort((a, b) =>
-			a.Locale === b.Locale ? 0 : a.Locale.includes(navigator.language) ? -1 : 1
-		);
+		try {
+			const response = await fetch('/api/edgeTTSStream/voices');
+			if (response.ok) {
+				const voices = await response.json();
+				if (Array.isArray(voices)) {
+					ttsVoices = voices.sort((a, b) =>
+						a.Locale === b.Locale ? 0 : a.Locale.includes(navigator.language) ? -1 : 1
+					);
+				} else {
+					console.error('TTS voices response is not an array:', voices);
+					ttsVoices = [];
+				}
+			} else {
+				console.error('Failed to fetch TTS voices:', response.status);
+				ttsVoices = [];
+			}
+		} catch (error) {
+			console.error('Error fetching TTS voices:', error);
+			ttsVoices = [];
+		}
 	});
 </script>
 

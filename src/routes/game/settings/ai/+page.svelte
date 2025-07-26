@@ -26,6 +26,10 @@
 	import AiGenerationSettings from '$lib/components/interaction_modals/settings/AiGenerationSettings.svelte';
 	import OutputFeaturesModal from '$lib/components/interaction_modals/settings/OutputFeaturesModal.svelte';
 	import SystemPromptsModal from '$lib/components/interaction_modals/settings/SystemPromptsModal.svelte';
+	import backgroundSvg from '$lib/assets/bckg.svg';
+	import logoSvg from '$lib/assets/rollrole.svg';
+
+	let showSettings = $state(false);
 
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
@@ -197,7 +201,15 @@
 {#if isGeneratingState}
 	<LoadingModal loadingText="Creating Your New Tale, this may take a minute..." />
 {/if}
-<form class="m-6 flex flex-col items-center text-center">
+
+<!-- Main Content Area -->
+<div class="container mx-auto px-6 py-12">
+	<div class="text-center mb-12">
+		<h1 class="text-5xl font-bold text-white mb-4 font-jaro">AI Settings</h1>
+	</div>
+
+	<div class="max-w-2xl mx-auto bg-black bg-opacity-50 p-8 rounded-lg">
+		<form class="m-6 flex flex-col items-center text-center">
 	<label class="form-control w-full sm:w-2/3">
 		<p>Google Gemini API Key</p>
 		<input
@@ -264,4 +276,6 @@
 	<button class="btn btn-neutral m-auto mt-5 w-1/2" onclick={() => (showSystemPromptsModal = true)}>
 		System Prompts
 	</button>
-</form>
+		</form>
+	</div>
+</div>

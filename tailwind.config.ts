@@ -4,12 +4,15 @@ export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 
 	theme: {
-		extend: {
-			colors: {
-				'infinity-blue': '#339AF0'
+			extend: {
+				colors: {
+					'infinity-blue': '#339AF0'
+				},
+				fontFamily: {
+					jaro: ['Jaro', 'sans-serif']
+				}
 			}
-		}
-	},
+		},
 	daisyui: {
 		themes: ['business']
 	},
