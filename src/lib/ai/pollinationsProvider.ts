@@ -11,7 +11,7 @@ import isPlainObject from 'lodash.isplainobject';
 import type { GenerateContentConfig } from '@google/genai';
 
 export const defaultGPT4JsonConfig: GenerateContentConfig = {
-	temperature: 1.1,
+	temperature: 1,
 	topP: 0.95,
 	topK: 40,
 	maxOutputTokens: 8192,
@@ -30,7 +30,7 @@ export class PollinationsProvider extends LLM {
 	}
 
 	getDefaultTemperature(): number {
-		return 1.1;
+		return 1;
 	}
 
 	getMaxTemperature(): number {

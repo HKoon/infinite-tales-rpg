@@ -33,6 +33,7 @@
 
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	//TODO migrate all AI settings into this object to avoid too many vars in local storage
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
 		disableAudioState: false,
@@ -94,7 +95,7 @@
 	const provideLLM = () => {
 		const provider = aiConfigState.value?.selectedProvider || 'gemini';
 		let config: any = {
-			temperature: 2,
+			temperature: temperatureState.value,
 			language: aiLanguage.value,
 			provider: provider
 		};
@@ -236,6 +237,22 @@
 					<option value="pollinations">Pollinations (Free)</option>
 				</select>
 				<small class="m-auto mt-2">Choose your preferred AI provider</small>
+			</label>
+
+			<!-- Temperature Setting -->
+			<label class="form-control w-full sm:w-2/3 mb-6">
+				<p class="text-lg font-semibold mb-2">Temperature: {temperatureState.value.toFixed(2)}</p>
+				<input
+					type="range"
+					min="0"
+					max="2"
+					step="0.05"
+					bind:value={temperatureState.value}
+					class="range range-info mt-2"
+				/>
+				<small class="m-auto mt-2 text-sm text-base-content/70">
+					Higher temperature makes the AI more creative, but also errors more likely.
+				</small>
 			</label>
 
 			<!-- Gemini Configuration -->
