@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+	font-family: 'Noto Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .btn {
+	font-family: 'Jaro', sans-serif;
+}
+
+input, textarea, select {
+    font-family: 'Noto Sans', sans-serif;
+}
+
 .btn {
 	height: auto;
 }

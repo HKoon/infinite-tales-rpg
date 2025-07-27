@@ -9,7 +9,8 @@ export default {
 					'infinity-blue': '#339AF0'
 				},
 				fontFamily: {
-					jaro: ['Jaro', 'sans-serif']
+					jaro: ['Jaro', 'sans-serif'],
+					'noto-sans': ['"Noto Sans"', 'sans-serif']
 				}
 			}
 		},
