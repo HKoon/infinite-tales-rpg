@@ -15,6 +15,7 @@
 	import ImportExportSaveGame from '$lib/components/ImportExportSaveGame.svelte';
 	import { type CharacterDescription, initialCharacterState } from '$lib/ai/agents/characterAgent';
 	import type { AIConfig } from '$lib';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
@@ -29,15 +30,15 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
 
 	onMount(() => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			2
+		);
+		
 		storyAgent = new StoryAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 2,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 	});
 

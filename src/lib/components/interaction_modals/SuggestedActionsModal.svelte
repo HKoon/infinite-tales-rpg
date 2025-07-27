@@ -18,6 +18,7 @@
 	import { isEnoughResource } from '../../../routes/game/gameLogic';
 	import LoadingIcon from '$lib/components/LoadingIcon.svelte';
 	import type { AIConfig } from '$lib';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	let {
 		onclose,
@@ -52,14 +53,14 @@
 	let actionAgent: ActionAgent;
 
 	onMount(async () => {
-		const llm = LLMProvider.provideLLM(
-			{
-				temperature: temperatureState.value,
-				language: aiLanguage.value,
-				apiKey: apiKeyState.value
-			},
-			aiConfigState.value?.useFallbackLlmState
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			temperatureState.value || 2
 		);
+		
+		const llm = LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState);
 		actionAgent = new ActionAgent(llm);
 
 		isGeneratingState = true;

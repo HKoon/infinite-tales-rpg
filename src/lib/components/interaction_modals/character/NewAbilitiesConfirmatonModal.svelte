@@ -9,6 +9,7 @@
 	import type { AIConfig } from '$lib';
 	import { LLMProvider } from '$lib/ai/llmProvider';
 	import LoadingModal from '$lib/components/LoadingModal.svelte';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	let {
 		onclose,
@@ -31,15 +32,15 @@
 	let newSpellsAbilities: Ability[] = $state([]);
 
 	onMount(async () => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			0.5
+		);
+		
 		characterStatsAgent = new CharacterStatsAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 0.5,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 	});
 

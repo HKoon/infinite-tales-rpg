@@ -15,6 +15,7 @@
 	import { initialStoryState, type Story } from '$lib/ai/agents/storyAgent';
 	import type { Campaign } from '$lib/ai/agents/campaignAgent';
 	import type { AIConfig } from '$lib';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 	import type { PlayerCharactersIdToNamesMap } from '$lib/ai/agents/gameAgent';
 	import {
 		addCharacterToPlayerCharactersIdToNamesMap,
@@ -41,15 +42,15 @@
 	);
 	let characterAgent: CharacterAgent;
 	onMount(() => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			2
+		);
+		
 		characterAgent = new CharacterAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 2,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 		let playerCharacterId = getCharacterTechnicalId(
 			playerCharactersIdToNamesMapState.value,

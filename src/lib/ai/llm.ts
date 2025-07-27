@@ -38,13 +38,14 @@ export interface LLMRequest {
 }
 
 export interface LLMconfig {
-	provider?: 'gemini' | 'pollinations';
+	provider?: 'gemini' | 'pollinations' | 'openai';
 	temperature?: number;
 	config?: GenerateContentConfig;
 	language?: string;
 	systemInstruction?: string[] | string;
 	tryAutoFixJSONError?: boolean;
 	apiKey?: string;
+	baseUrl?: string; // For OpenAI-compatible APIs
 	model?: string;
 	returnFallbackProperty?: boolean;
 }

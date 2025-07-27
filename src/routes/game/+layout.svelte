@@ -8,6 +8,7 @@
 	import { stringifyPretty } from '$lib/util.svelte';
 	import backgroundSvg from '$lib/assets/bckg.svg';
 	import logoSvg from '$lib/assets/rollrole.svg';
+	import { StreamManager } from '$lib/utils/streamManager';
 
 	let showSettings = $state(false);
 	let { children } = $props();
@@ -44,6 +45,25 @@
 			}
 			handleError(text);
 			return false;
+		};
+
+		// Add cleanup for streams on page unload
+		const handleBeforeUnload = () => {
+			try {
+				const streamManager = StreamManager.getInstance();
+				streamManager.cleanup();
+			} catch (error) {
+				console.error('Error cleaning up streams on page unload:', error);
+			}
+		};
+
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		window.addEventListener('pagehide', handleBeforeUnload);
+
+		// Cleanup function
+		return () => {
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+			window.removeEventListener('pagehide', handleBeforeUnload);
 		};
 	});
 </script>

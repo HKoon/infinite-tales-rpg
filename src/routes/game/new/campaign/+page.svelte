@@ -24,6 +24,7 @@
 	import { type Story } from '$lib/ai/agents/storyAgent';
 	import { beforeNavigate } from '$app/navigation';
 	import type { AIConfig } from '$lib';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 	import backgroundImage from '$lib/assets/bckg.svg';
 	import logo from '$lib/assets/logo.jpeg';
 	let showSettings = $state(false);
@@ -41,15 +42,15 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
 
 	onMount(() => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			2
+		);
+		
 		campaignAgent = new CampaignAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 2,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 
 		beforeNavigate(() => {

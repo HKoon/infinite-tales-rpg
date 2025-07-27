@@ -24,6 +24,7 @@
 	import { SummaryAgent } from '$lib/ai/agents/summaryAgent';
 	import type { NPCState } from '$lib/ai/agents/characterStatsAgent';
 	import type { Campaign, CampaignChapter } from '$lib/ai/agents/campaignAgent';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	let {
 		onclose,
@@ -72,14 +73,14 @@
 	let isGeneratingState: boolean = $state(false);
 
 	onMount(async () => {
-		const llm = LLMProvider.provideLLM(
-			{
-				temperature: 0.7,
-				language: aiLanguage.value,
-				apiKey: apiKeyState.value
-			},
-			aiConfigState.value?.useFallbackLlmState
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			0.7
 		);
+		
+		const llm = LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState);
 		gameAgent = new GameAgent(llm);
 		const summaryAgent = new SummaryAgent(llm);
 		isGeneratingState = true;

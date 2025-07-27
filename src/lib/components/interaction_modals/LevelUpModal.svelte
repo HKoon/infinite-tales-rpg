@@ -14,6 +14,7 @@
 	import LoadingModal from '$lib/components/LoadingModal.svelte';
 	import type { AIConfig } from '$lib';
 	import AbilityComponent from './AbilityComponent.svelte';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	let {
 		onclose
@@ -34,15 +35,15 @@
 	let characterStatsAgent: CharacterStatsAgent;
 
 	onMount(async () => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			2
+		);
+		
 		characterStatsAgent = new CharacterStatsAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 2,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 		aiLevelUp = await generateLevelUp();
 	});

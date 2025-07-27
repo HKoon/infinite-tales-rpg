@@ -1,4 +1,5 @@
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import { StreamManager, generateStreamId } from '$lib/utils/streamManager';
 
 export async function GET({ url }) {
 	try {
@@ -19,28 +20,45 @@ export async function GET({ url }) {
 		await tts.setMetadata(data.voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
 		const readable = tts.toStream(data.text).audioStream;
-
-		let isStreamClosed = false; // Flag to track stream state
+		const streamManager = StreamManager.getInstance();
+		const streamId = generateStreamId();
 
 		// Create a ReadableStream for the audio response
 		const stream = new ReadableStream({
 			start(controller) {
+				streamManager.registerStream(streamId, controller);
+				
 				readable.on('data', (chunk) => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.enqueue(chunk); // Enqueue each chunk as it arrives
+					if (!streamManager.safeEnqueue(streamId, chunk)) {
+						console.warn(`Failed to enqueue chunk for stream ${streamId}`);
+					}
 				});
 
 				readable.on('end', () => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.close(); // Close the stream when the readable stream ends
-					isStreamClosed = true; // Mark the stream as closed
+					if (!streamManager.safeClose(streamId)) {
+						console.warn(`Failed to close stream ${streamId}`);
+					}
 				});
 
 				readable.on('error', (err) => {
-					if (isStreamClosed) return; // Skip if the stream is already closed
-					controller.error(err); // Propagate errors
-					isStreamClosed = true; // Mark the stream as closed
+					console.error('TTS readable stream error:', err);
+					if (!streamManager.safeError(streamId, err)) {
+						console.warn(`Failed to propagate error for stream ${streamId}`);
+					}
 				});
+			},
+			
+			cancel() {
+				// Handle stream cancellation
+				console.log(`Stream ${streamId} cancelled`);
+				streamManager.markStreamClosed(streamId);
+				if (readable && typeof readable.destroy === 'function') {
+					try {
+						readable.destroy();
+					} catch (error) {
+						console.error('Error destroying readable stream:', error);
+					}
+				}
 			}
 		});
 
@@ -53,7 +71,12 @@ export async function GET({ url }) {
 			}
 		});
 	} catch (err) {
-		console.error('Error in GET handler:', err);
-		return new Response(JSON.stringify({ error: 'Failed to process TTS' }), { status: 500 });
+		console.error('Error in TTS GET handler:', err);
+		return new Response(JSON.stringify({ error: 'Failed to process TTS', details: err.message }), { 
+			status: 500,
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
 	}
 }

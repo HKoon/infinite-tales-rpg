@@ -73,6 +73,7 @@
 	import SuggestedActionsModal from '$lib/components/interaction_modals/SuggestedActionsModal.svelte';
 	import type { AIConfig } from '$lib';
 	import ResourcesComponent from '$lib/components/ResourcesComponent.svelte';
+	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	import { initializeMissingResources, refillResourcesFully } from './resourceLogic';
 	import {
@@ -247,14 +248,15 @@
 				}
 			}
 		});
-		const llm = LLMProvider.provideLLM(
-			{
-				temperature: temperatureState.value,
-				language: aiLanguage.value,
-				apiKey: apiKeyState.value
-			},
-			aiConfigState.value?.useFallbackLlmState
+		
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			temperatureState.value || 2
 		);
+		
+		const llm = LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState);
 		gameAgent = new GameAgent(llm);
 		characterStatsAgent = new CharacterStatsAgent(llm);
 		combatAgent = new CombatAgent(llm);

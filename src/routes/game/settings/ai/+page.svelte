@@ -37,7 +37,8 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
 		disableAudioState: false,
 		disableImagesState: false,
-		useFallbackLlmState: false
+		useFallbackLlmState: false,
+		selectedProvider: 'gemini'
 	});
 	let showGenerationSettingsModal = $state<boolean>(false);
 	let showOutputFeaturesModal = $state<boolean>(false);
@@ -91,20 +92,33 @@
 	});
 
 	const provideLLM = () => {
-		llm = LLMProvider.provideLLM(
-			{
-				temperature: 2,
-				apiKey: apiKeyState.value,
-				language: aiLanguage.value
-			},
-			aiConfigState.value?.useFallbackLlmState
-		);
+		const provider = aiConfigState.value?.selectedProvider || 'gemini';
+		let config: any = {
+			temperature: 2,
+			language: aiLanguage.value,
+			provider: provider
+		};
+
+		if (provider === 'openai') {
+			config.apiKey = aiConfigState.value?.openaiApiKey;
+			config.baseUrl = aiConfigState.value?.openaiBaseUrl || 'https://api.openai.com/v1';
+			config.model = aiConfigState.value?.openaiModel || 'gpt-4o';
+		} else {
+			config.apiKey = apiKeyState.value;
+		}
+
+		llm = LLMProvider.provideLLM(config, aiConfigState.value?.useFallbackLlmState);
 		storyAgent = new StoryAgent(llm);
 	};
 
 	const onQuickstartClicked = () => {
-		provideLLM();
-		if (apiKeyState.value) {
+		const provider = aiConfigState.value?.selectedProvider || 'gemini';
+		const hasApiKey = provider === 'openai' 
+			? aiConfigState.value?.openaiApiKey 
+			: apiKeyState.value;
+		
+		if (hasApiKey) {
+			provideLLM();
 			quickstartModalOpen = true;
 		}
 	};
@@ -210,72 +224,151 @@
 
 	<div class="max-w-2xl mx-auto bg-black bg-opacity-50 p-8 rounded-lg">
 		<form class="m-6 flex flex-col items-center text-center">
-	<label class="form-control w-full sm:w-2/3">
-		<p>Google Gemini API Key</p>
-		<input
-			type="text"
-			id="apikey"
-			bind:value={apiKeyState.value}
-			placeholder="Copy your API Key from Google AI Studio and paste here"
-			class="input input-bordered mt-2"
-		/>
-		<small class="m-auto mt-2"
-			>View the
-			<a
-				target="_blank"
-				href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91"
-				class="link text-blue-400 underline"
-			>
-				guide to create the API Key</a
-			></small
-		>
-	</label>
-	<button class="btn btn-accent m-auto mt-5 w-1/2" onclick={onQuickstartClicked}>
-		Quickstart:<br />New Tale
-	</button>
-	<small class="m-auto mt-2">Let the AI generate a Tale for you</small>
-	<button
-		class="btn btn-neutral m-auto mt-5 w-1/2"
-		disabled={!apiKeyState.value}
-		onclick={onStartCustom}
-	>
-		New Custom Tale
-	</button>
-	<small class="m-auto mt-2">Customize your Tale with a brief, open-ended plot</small>
-	<button
-		class="btn btn-neutral m-auto mt-5 w-1/2"
-		disabled={!apiKeyState.value}
-		onclick={onNewCampaign}
-	>
-		New Campaign
-	</button>
-	<small class="m-auto mt-2">Structured Tale with in-detail planned plot</small>
-	<div class="divider mt-7">Advanced Settings</div>
+			<!-- AI Provider Selection -->
+			<label class="form-control w-full sm:w-2/3 mb-6">
+				<p class="text-lg font-semibold mb-2">AI Provider</p>
+				<select 
+					bind:value={aiConfigState.value.selectedProvider} 
+					class="select select-bordered mt-2"
+				>
+					<option value="gemini">Google Gemini</option>
+					<option value="openai">OpenAI</option>
+					<option value="pollinations">Pollinations (Free)</option>
+				</select>
+				<small class="m-auto mt-2">Choose your preferred AI provider</small>
+			</label>
 
-	{#if showGenerationSettingsModal}
-		<AiGenerationSettings onclose={() => (showGenerationSettingsModal = false)} />
-	{/if}
-	<button
-		class="btn btn-neutral m-auto mt-5 w-1/2"
-		onclick={() => (showGenerationSettingsModal = true)}
-	>
-		Generation Settings
-	</button>
-	{#if showOutputFeaturesModal}
-		<OutputFeaturesModal onclose={() => (showOutputFeaturesModal = false)} />
-	{/if}
-	<button
-		class="btn btn-neutral m-auto mt-5 w-1/2"
-		onclick={() => (showOutputFeaturesModal = true)}
-	>
-		Output Features
-	</button>
-	{#if showSystemPromptsModal}
-		<SystemPromptsModal onclose={() => (showSystemPromptsModal = false)} />
-	{/if}
-	<button class="btn btn-neutral m-auto mt-5 w-1/2" onclick={() => (showSystemPromptsModal = true)}>
-		System Prompts
-	</button>
+			<!-- Gemini Configuration -->
+			{#if aiConfigState.value.selectedProvider === 'gemini'}
+				<label class="form-control w-full sm:w-2/3">
+					<p>Google Gemini API Key</p>
+					<input
+						type="text"
+						id="apikey"
+						bind:value={apiKeyState.value}
+						placeholder="Copy your API Key from Google AI Studio and paste here"
+						class="input input-bordered mt-2"
+					/>
+					<small class="m-auto mt-2"
+						>View the
+						<a
+							target="_blank"
+							href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91"
+							class="link text-blue-400 underline"
+						>
+							guide to create the API Key</a
+						></small
+					>
+				</label>
+			{/if}
+
+			<!-- OpenAI Configuration -->
+			{#if aiConfigState.value.selectedProvider === 'openai'}
+				<label class="form-control w-full sm:w-2/3 mb-4">
+					<p>OpenAI API Key</p>
+					<input
+						type="password"
+						bind:value={aiConfigState.value.openaiApiKey}
+						placeholder="sk-..."
+						class="input input-bordered mt-2"
+					/>
+					<small class="m-auto mt-2">
+						Get your API key from 
+						<a
+							target="_blank"
+							href="https://platform.openai.com/api-keys"
+							class="link text-blue-400 underline"
+						>
+							OpenAI Platform
+						</a>
+					</small>
+				</label>
+
+				<label class="form-control w-full sm:w-2/3 mb-4">
+					<p>Base URL (Optional)</p>
+					<input
+						type="text"
+						bind:value={aiConfigState.value.openaiBaseUrl}
+						placeholder="https://api.openai.com/v1"
+						class="input input-bordered mt-2"
+					/>
+					<small class="m-auto mt-2">For OpenAI-compatible APIs (leave default for OpenAI)</small>
+				</label>
+
+				<label class="form-control w-full sm:w-2/3 mb-4">
+					<p>Model Name</p>
+					<input
+						type="text"
+						bind:value={aiConfigState.value.openaiModel}
+						placeholder="gpt-4o"
+						class="input input-bordered mt-2"
+					/>
+					<small class="m-auto mt-2">Enter the model name (e.g., gpt-4o, gpt-4o-mini, claude-3-5-sonnet-20241022)</small>
+				</label>
+			{/if}
+
+			<!-- Pollinations Info -->
+			{#if aiConfigState.value.selectedProvider === 'pollinations'}
+				<div class="alert alert-info w-full sm:w-2/3 mb-4">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+					<span>Pollinations is free but may have limitations. No API key required.</span>
+				</div>
+			{/if}
+
+			<!-- Action Buttons -->
+			<button class="btn btn-accent m-auto mt-5 w-1/2" onclick={onQuickstartClicked}>
+				Quickstart:<br />New Tale
+			</button>
+			<small class="m-auto mt-2">Let the AI generate a Tale for you</small>
+			
+			<button
+				class="btn btn-neutral m-auto mt-5 w-1/2"
+				disabled={!((aiConfigState.value.selectedProvider === 'openai' && aiConfigState.value.openaiApiKey) || 
+						   (aiConfigState.value.selectedProvider === 'gemini' && apiKeyState.value) ||
+						   (aiConfigState.value.selectedProvider === 'pollinations'))}
+				onclick={onStartCustom}
+			>
+				New Custom Tale
+			</button>
+			<small class="m-auto mt-2">Customize your Tale with a brief, open-ended plot</small>
+			
+			<button
+				class="btn btn-neutral m-auto mt-5 w-1/2"
+				disabled={!((aiConfigState.value.selectedProvider === 'openai' && aiConfigState.value.openaiApiKey) || 
+						   (aiConfigState.value.selectedProvider === 'gemini' && apiKeyState.value) ||
+						   (aiConfigState.value.selectedProvider === 'pollinations'))}
+				onclick={onNewCampaign}
+			>
+				New Campaign
+			</button>
+			<small class="m-auto mt-2">Structured Tale with in-detail planned plot</small>
+			
+			<div class="divider mt-7">Advanced Settings</div>
+
+			{#if showGenerationSettingsModal}
+				<AiGenerationSettings onclose={() => (showGenerationSettingsModal = false)} />
+			{/if}
+			<button
+				class="btn btn-neutral m-auto mt-5 w-1/2"
+				onclick={() => (showGenerationSettingsModal = true)}
+			>
+				Generation Settings
+			</button>
+			{#if showOutputFeaturesModal}
+				<OutputFeaturesModal onclose={() => (showOutputFeaturesModal = false)} />
+			{/if}
+			<button
+				class="btn btn-neutral m-auto mt-5 w-1/2"
+				onclick={() => (showOutputFeaturesModal = true)}
+			>
+				Output Features
+			</button>
+			{#if showSystemPromptsModal}
+				<SystemPromptsModal onclose={() => (showSystemPromptsModal = false)} />
+			{/if}
+			<button class="btn btn-neutral m-auto mt-5 w-1/2" onclick={() => (showSystemPromptsModal = true)}>
+				System Prompts
+			</button>
 		</form>
 	</div>
 </div>

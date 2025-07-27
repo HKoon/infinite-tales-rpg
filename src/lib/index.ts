@@ -4,4 +4,10 @@ export type AIConfig = {
 	disableAudioState: boolean;
 	disableImagesState: boolean;
 	useFallbackLlmState: boolean;
+	// OpenAI configuration
+	openaiApiKey?: string;
+	openaiBaseUrl?: string;
+	openaiModel?: string;
+	// Provider selection
+	selectedProvider?: 'gemini' | 'openai' | 'pollinations';
 };

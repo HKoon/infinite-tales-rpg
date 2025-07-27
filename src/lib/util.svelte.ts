@@ -168,11 +168,56 @@ export const removeEmptyValues = (object: object) =>
 
 export function playAudioFromStream(text, voice, onended?): HTMLAudioElement {
 	const audio = new Audio();
-	audio.src = getTTSUrl(text, voice);
-	audio.autoplay = true;
-	if (onended) {
-		audio.onended = onended;
+	
+	// Add error handling for audio loading and playback
+	audio.addEventListener('error', (e) => {
+		console.error('Audio playback error:', e);
+		// Try to clean up the audio element
+		try {
+			audio.pause();
+			audio.src = '';
+		} catch (cleanupError) {
+			console.error('Error cleaning up audio element:', cleanupError);
+		}
+	});
+
+	// Add load error handling
+	audio.addEventListener('loadstart', () => {
+		console.log('Audio loading started for TTS');
+	});
+
+	audio.addEventListener('canplay', () => {
+		console.log('Audio can start playing');
+	});
+
+	// Set up the source and autoplay
+	try {
+		audio.src = getTTSUrl(text, voice);
+		audio.autoplay = true;
+		
+		if (onended) {
+			audio.onended = onended;
+		}
+
+		// Add cleanup on ended to prevent memory leaks
+		const originalOnended = audio.onended;
+		audio.onended = (event) => {
+			if (originalOnended) {
+				originalOnended(event);
+			}
+			// Clean up the audio element
+			setTimeout(() => {
+				try {
+					audio.src = '';
+				} catch (error) {
+					console.error('Error cleaning up audio source:', error);
+				}
+			}, 100);
+		};
+	} catch (error) {
+		console.error('Error setting up audio playback:', error);
 	}
+
 	return audio;
 }
 

@@ -19,6 +19,7 @@ import isEqual from 'lodash/isEqual';
 import LoadingModal from '$lib/components/LoadingModal.svelte';
 import { defaultGameSettings, type GameSettings } from '$lib/ai/agents/gameAgent';
 import type { AIConfig } from '$lib';
+import { createLLMConfig } from '$lib/ai/llmConfigHelper';
 import AbilityEditor from '$lib/components/interaction_modals/character/AbilityEditor.svelte';
 
 	let isGeneratingState = $state(false);
@@ -45,15 +46,15 @@ import AbilityEditor from '$lib/components/interaction_modals/character/AbilityE
 	let characterStatsStateOverwrites = $state(cloneDeep(initialCharacterStatsState));
 
 	onMount(() => {
+		const llmConfig = createLLMConfig(
+			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
+			apiKeyState.value || '',
+			aiLanguage.value || '',
+			2
+		);
+		
 		characterStatsAgent = new CharacterStatsAgent(
-			LLMProvider.provideLLM(
-				{
-					temperature: 2,
-					apiKey: apiKeyState.value,
-					language: aiLanguage.value
-				},
-				aiConfigState.value?.useFallbackLlmState
-			)
+			LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState)
 		);
 	});
 

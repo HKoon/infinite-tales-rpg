@@ -1,6 +1,7 @@
 import { defaultGeminiJsonConfig, GEMINI_MODELS, GeminiProvider } from '$lib/ai/geminiProvider';
 import { LLM, type LLMconfig } from '$lib/ai/llm';
 import { PollinationsProvider } from '$lib/ai/pollinationsProvider';
+import { OpenAIProvider, OPENAI_MODELS } from '$lib/ai/openaiProvider';
 
 export const defaultLLMConfig: LLMconfig = {
 	provider: 'gemini',
@@ -12,7 +13,10 @@ export const defaultLLMConfig: LLMconfig = {
 export class LLMProvider {
 	static provideLLM(llmConfig: LLMconfig, useFallback: boolean = false): LLM {
 		const configToUse: LLMconfig = { ...defaultLLMConfig, ...llmConfig };
-		if (configToUse.provider === 'pollinations') {
+		
+		if (configToUse.provider === 'openai') {
+			return new OpenAIProvider(configToUse);
+		} else if (configToUse.provider === 'pollinations') {
 			return new PollinationsProvider({ ...configToUse, model: 'openai' });
 		} else {
 			//fallback to flash-exp if thinking-exp fails
