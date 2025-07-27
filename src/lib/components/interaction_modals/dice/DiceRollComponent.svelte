@@ -89,12 +89,19 @@
 		}
 	});
 	let diceBox;
-	onMount(() => {
-		diceBox = new DiceBox('#dice-box', {
-			assetPath: '/assets/dice-box/' // required
-		});
-		diceBox.init();
-		isMounted = true;
+	onMount(async () => {
+		try {
+			diceBox = new DiceBox('#dice-box', {
+				assetPath: '/assets/dice-box/' // required
+			});
+			await diceBox.init();
+			console.log('DiceBox initialized successfully');
+			isMounted = true;
+		} catch (error) {
+			console.error('Failed to initialize DiceBox:', error);
+			console.warn('DiceBox initialization failed, dice rolling will use fallback method');
+			isMounted = true; // 仍然设置为已挂载，这样其他功能可以正常工作
+		}
 	});
 
 	function getRollResult() {
@@ -102,17 +109,46 @@
 	}
 
 	let onRoll = (evt) => {
-		//for easy testing
-		//rolledValueState.value = getRandomInteger(1, 20);
-		//return;
 		evt.currentTarget.disabled = true;
-		diceBox.roll('1d20').then((results) => {
-			rolledValueState.value = results[0].value;
-		});
+		
+		// 检查 diceBox 是否已正确初始化
+		if (!diceBox || !diceBox.roll) {
+			console.warn('DiceBox not properly initialized, using fallback random roll');
+			// 使用备用的随机数生成
+			rolledValueState.value = getRandomInteger(1, 20);
+			return;
+		}
+		
+		try {
+			diceBox.roll('1d20').then((results) => {
+				if (results && results.length > 0 && results[0].value) {
+					rolledValueState.value = results[0].value;
+				} else {
+					console.warn('DiceBox returned invalid results, using fallback');
+					rolledValueState.value = getRandomInteger(1, 20);
+				}
+			}).catch((error) => {
+				console.error('DiceBox roll failed:', error);
+				// 如果3D骰子失败，使用备用方案
+				rolledValueState.value = getRandomInteger(1, 20);
+			});
+		} catch (error) {
+			console.error('Error calling diceBox.roll:', error);
+			// 如果出现任何错误，使用备用方案
+			rolledValueState.value = getRandomInteger(1, 20);
+		}
 	};
 
 	const onClose = () => {
-		diceBox.clear();
+		// 只有在 diceBox 存在且有 clear 方法时才调用
+		if (diceBox && typeof diceBox.clear === 'function') {
+			try {
+				diceBox.clear();
+			} catch (error) {
+				console.warn('Failed to clear diceBox:', error);
+			}
+		}
+		
 		diceRollDialog.close($state.snapshot(diceRollResultState));
 		rollDifferenceHistoryState.value = [
 			...rollDifferenceHistoryState.value.slice(-2),
