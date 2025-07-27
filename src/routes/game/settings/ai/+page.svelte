@@ -240,7 +240,7 @@
 			</label>
 
 			<!-- Temperature Setting -->
-			<label class="form-control w-full sm:w-2/3 mb-6 z-10">
+			<label class="form-control w-full sm:w-2/3 mb-6 z-5">
 				<p class="text-lg font-semibold mb-2">Temperature: {temperatureState.value.toFixed(2)}</p>
 				<input
 					type="range"

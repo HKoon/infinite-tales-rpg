@@ -104,7 +104,7 @@
 					</svg>
 				</button>
 				{#if showSettings}
-					<div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+					<div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
 						<a href="/game/settings/ai" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">AI Settings</a>
 						<a href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">API Key Guide</a>
 						<a href="https://discord.gg/CUvgRQR77y" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Discord Community</a>
@@ -118,7 +118,7 @@
 			<ErrorModal />
 		{/if}
 
-		<nav class="btm-nav ml-auto mr-auto h-[7vh] max-w-7xl overflow-auto bg-base-300">
+		<nav class="btm-nav ml-auto mr-auto h-[7vh] max-w-7xl overflow-auto bg-base-300 z-50">
 			<ul class="menu gap-0 p-0 sm:text-lg">
 				<li>
 					<a href="/game" class:active={activeUrl === '/game'}>Tale</a>
