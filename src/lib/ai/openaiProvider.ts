@@ -261,15 +261,16 @@ export class OpenAIProvider extends LLM {
 					parsedContent = JSON.parse(content);
 				} catch (jsonError) {
 					// Use JSON fixing interceptor
-					const fixedResult = await this.jsonFixingInterceptorAgent.fixJsonAndRetry(
+					console.log('Try json fix with llm agent');
+					const fixedContent = await this.jsonFixingInterceptorAgent.fixJSON(
 						content,
-						request,
-						this.generateContent.bind(this)
+						(jsonError as SyntaxError).message
 					);
-					if (fixedResult) {
-						return fixedResult;
+					if (fixedContent) {
+						parsedContent = fixedContent;
+					} else {
+						throw new Error(`Failed to parse JSON response: ${content}`);
 					}
-					throw new Error(`Failed to parse JSON response: ${content}`);
 				}
 			} else {
 				try {
