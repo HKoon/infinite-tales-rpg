@@ -22,6 +22,7 @@
 		type ThoughtsState
 	} from '$lib/util.svelte';
 	import LoadingModal from '$lib/components/LoadingModal.svelte';
+	import AIReplyLoading from '$lib/components/AIReplyLoading.svelte';
 	import type { RelatedStoryHistory } from '$lib/ai/agents/summaryAgent';
 	import { SummaryAgent } from '$lib/ai/agents/summaryAgent';
 	import {
@@ -1456,9 +1457,6 @@
 </script>
 
 <div id="game-container" class="container mx-auto p-4">
-	{#if isAiGeneratingState}
-		<LoadingModal></LoadingModal>
-	{/if}
 	{#if errorState.userMessage && errorState.code != 'memory_retrieval'}
 		<ErrorDialog onclose={handleAIError} />
 	{/if}
@@ -1558,6 +1556,10 @@
 		{/if}
 		{#if isGameEnded.value}
 			<StoryProgressionWithImage story={gameLogic.getGameEndedMessage()} />
+		{/if}
+		
+		{#if isAiGeneratingState}
+			<AIReplyLoading loadingText="GM is crafting your story..." />
 		{/if}
 	</div>
 
