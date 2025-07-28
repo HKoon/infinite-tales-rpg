@@ -141,7 +141,7 @@
 		'characterStatsState',
 		initialCharacterStatsState
 	);
-	let storyChunkState = $state<string>('');
+	let storyChunkState = $state<string | null>(null);
 	let thoughtsState = useLocalStorage<ThoughtsState>('thoughtsState', initialThoughtsState);
 
 	const skillsProgressionState = useLocalStorage<SkillsProgression>('skillsProgressionState', {});
@@ -1368,6 +1368,13 @@
 	};
 
 	function onStoryStreamUpdate(storyChunk: string, isComplete: boolean): void {
+		console.log('📖 onStoryStreamUpdate called:', {
+			chunkLength: storyChunk.length,
+			isComplete,
+			currentStateLength: storyChunkState?.length || 0,
+			chunk: storyChunk.substring(0, 50) + (storyChunk.length > 50 ? '...' : '')
+		});
+		
 		if (!storyChunkState && !isComplete) {
 			latestStoryProgressionTextComponent?.scrollIntoView();
 			const time = new Date().toLocaleTimeString();
@@ -1383,11 +1390,13 @@
 		
 		// 累积story chunks而不是替换
 		if (isComplete) {
-			// 流式输出完成，标记完成状态
-			storyChunkState = storyChunkState; // 保持当前累积的内容
+			// 流式输出完成，清除storyChunkState以标记完成状态
+			console.log('Story stream completed, final content length:', storyChunkState?.length || 0);
+			storyChunkState = null;
 		} else {
 			// 累积新的chunk到现有内容
-			storyChunkState += storyChunk;
+			storyChunkState = (storyChunkState || '') + storyChunk;
+			console.log('📝 Updated storyChunkState, new length:', storyChunkState.length);
 		}
 		
 		isAiGeneratingState = false;

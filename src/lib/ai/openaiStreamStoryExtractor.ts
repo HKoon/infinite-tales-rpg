@@ -185,43 +185,80 @@ export class AdvancedStoryExtractor {
 	processChunk(chunk: string): void {
 		if (this.storyComplete) return;
 
+		console.log('AdvancedStoryExtractor: Processing chunk of length:', chunk.length);
+		// 将新的chunk添加到累积的文本中
 		this.accumulatedText += chunk;
-		this.extractStoryContent();
-	}
 
-	private extractStoryContent(): void {
-		// 多种story字段匹配模式
-		const patterns = [
-			// 标准story字段: "story": "content"
-			/"story"\s*:\s*"((?:[^"\\]|\\.)*)"/,
-			// 在对象中的story字段
-			/{\s*[^}]*"story"\s*:\s*"((?:[^"\\]|\\.)*)"/,
-			// 在数组元素中的story字段
-			/\[\s*[^\]]*{\s*[^}]*"story"\s*:\s*"((?:[^"\\]|\\.)*)"/
-		];
+		// 尝试提取JSON对象
+		try {
+			// 使用更灵活的方式来查找和提取story内容
+			let startIndex = this.accumulatedText.indexOf('"story"');
+			if (startIndex !== -1) {
+				// 找到story字段后的冒号
+				let colonIndex = this.accumulatedText.indexOf(':', startIndex);
+				if (colonIndex !== -1) {
+					// 找到冒号后的第一个引号
+					let contentStart = this.accumulatedText.indexOf('"', colonIndex);
+					if (contentStart !== -1) {
+						contentStart++; // 移过开始引号
+						console.log('🎯 Found story field start, beginning stream output');
+						
+						// 获取当前可用的内容（不需要等待结束引号）
+						let currentContent = this.accumulatedText.substring(contentStart);
+						
+						// 检查是否有结束引号
+						let contentEnd = -1;
+						let i = 0;
+						let isEscaped = false;
 
-		for (const pattern of patterns) {
-			const storyMatch = this.accumulatedText.match(pattern);
-			
-			if (storyMatch) {
-				const rawStory = storyMatch[1];
-				const currentStory = this.unescapeJsonString(rawStory);
-				
-				// 只发送新增的内容
-				if (currentStory.length > this.lastStoryLength) {
-					const newContent = currentStory.slice(this.lastStoryLength);
-					this.storyUpdateCallback(newContent, false);
-					this.lastStoryLength = currentStory.length;
+						while (i < currentContent.length) {
+							if (currentContent[i] === '\\') {
+								isEscaped = !isEscaped;
+								i++;
+								continue;
+							}
+							
+							if (currentContent[i] === '"' && !isEscaped) {
+								contentEnd = i;
+								break;
+							}
+							
+							if (currentContent[i] !== '\\') {
+								isEscaped = false;
+							}
+							
+							i++;
+						}
+
+						// 如果找到结束引号，只处理到结束引号的内容
+						let storyContent;
+						if (contentEnd !== -1) {
+							storyContent = currentContent.substring(0, contentEnd);
+							this.storyComplete = true;
+						} else {
+							// 没有找到结束引号，处理所有可用内容
+							storyContent = currentContent;
+						}
+						
+						const unescapedContent = this.unescapeJsonString(storyContent);
+						
+						// 只发送新的内容
+						if (unescapedContent.length > this.lastStoryLength) {
+							const newContent = unescapedContent.slice(this.lastStoryLength);
+							console.log('📤 Sending story chunk:', newContent.substring(0, 50) + (newContent.length > 50 ? '...' : ''));
+							this.storyUpdateCallback(newContent, this.storyComplete);
+							this.lastStoryLength = unescapedContent.length;
+						}
+
+						// 如果已完成，发送完成信号
+						if (this.storyComplete) {
+							console.log('✅ Story field completed');
+						}
+					}
 				}
-
-				// 检查story字段是否完整（以引号结尾）
-				if (this.isStoryFieldComplete(storyMatch[0])) {
-					this.storyComplete = true;
-					this.storyUpdateCallback('', true);
-					console.log('✅ Advanced story extraction completed');
-				}
-				break;
 			}
+		} catch (error) {
+			console.warn('Error processing story chunk:', error);
 		}
 	}
 
