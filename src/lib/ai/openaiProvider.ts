@@ -9,6 +9,7 @@ import {
 	type ContentWithThoughts
 } from '$lib/ai/llm';
 import { errorState } from '$lib/state/errorState.svelte';
+import { OpenAIStreamStoryExtractor, AdvancedStoryExtractor, SimpleStoryExtractor } from './openaiStreamStoryExtractor.js';
 
 export const OPENAI_MODELS = {
 	GPT_4O: 'gpt-4o',
@@ -361,10 +362,19 @@ export class OpenAIProvider extends LLM {
 			let fullContent = '';
 			const decoder = new TextDecoder();
 
+			// 创建高级story提取器，支持复杂JSON结构
+			const storyExtractor = new AdvancedStoryExtractor(storyUpdateCallback);
+			
+			console.log('🚀 Starting OpenAI stream with story extraction');
+
 			try {
 				while (true) {
 					const { done, value } = await reader.read();
-					if (done) break;
+					if (done) {
+						// 流结束时强制完成story提取
+						storyExtractor.forceComplete();
+						break;
+					}
 
 					const chunk = decoder.decode(value);
 					const lines = chunk.split('\n');
@@ -373,7 +383,7 @@ export class OpenAIProvider extends LLM {
 						if (line.startsWith('data: ')) {
 							const data = line.slice(6);
 							if (data === '[DONE]') {
-								storyUpdateCallback('', true);
+								storyExtractor.forceComplete();
 								break;
 							}
 
@@ -382,10 +392,12 @@ export class OpenAIProvider extends LLM {
 								const content = parsed.choices?.[0]?.delta?.content;
 								if (content) {
 									fullContent += content;
-									storyUpdateCallback(content, false);
+									// 使用story提取器处理内容，只显示story字段
+									storyExtractor.processChunk(content);
 								}
 							} catch (e) {
 								// Ignore parsing errors for individual chunks
+								console.warn('Failed to parse OpenAI stream chunk:', e);
 							}
 						}
 					}
@@ -394,10 +406,33 @@ export class OpenAIProvider extends LLM {
 				reader.releaseLock();
 			}
 
+			console.log('✅ OpenAI stream completed');
+
 			// Try to parse the full content as JSON
 			try {
-				return JSON.parse(fullContent);
-			} catch {
+				const parsedJson = JSON.parse(fullContent);
+				console.log('📄 Successfully parsed complete JSON from OpenAI stream');
+				return parsedJson;
+			} catch (jsonError) {
+				console.warn('Failed to parse complete JSON, attempting fallback:', jsonError);
+				
+				// 尝试使用JSON修复代理
+				if (this.llmConfig.tryAutoFixJSONError) {
+					try {
+						console.log('🔧 Attempting JSON repair with interceptor agent');
+						const fixedContent = await this.jsonFixingInterceptorAgent.fixJSON(
+							fullContent,
+							(jsonError as SyntaxError).message
+						);
+						if (fixedContent) {
+							return fixedContent;
+						}
+					} catch (fixError) {
+						console.error('JSON repair failed:', fixError);
+					}
+				}
+				
+				// 最后的回退方案
 				return { text: fullContent };
 			}
 
