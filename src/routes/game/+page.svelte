@@ -73,7 +73,7 @@
 	import SuggestedActionsModal from '$lib/components/interaction_modals/SuggestedActionsModal.svelte';
 	import type { AIConfig } from '$lib';
 	import ResourcesComponent from '$lib/components/ResourcesComponent.svelte';
-	import { createLLMConfig } from '$lib/ai/llmConfigHelper';
+	import { createLLMConfig, createAgentLLMConfig } from '$lib/ai/llmConfigHelper';
 
 	import { initializeMissingResources, refillResourcesFully } from './resourceLogic';
 	import {
@@ -249,22 +249,60 @@
 			}
 		});
 		
-		const llmConfig = createLLMConfig(
-			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
-			apiKeyState.value || '',
-			aiLanguage.value || '',
-			temperatureState.value || 2
+		// 为每个agent创建独立的LLM配置
+		const baseAiConfig = aiConfigState.value || { 
+			disableAudioState: false, 
+			disableImagesState: false, 
+			useFallbackLlmState: false, 
+			selectedProvider: 'gemini' 
+		};
+		const baseApiKey = apiKeyState.value || '';
+		const baseLanguage = aiLanguage.value || '';
+		const baseTemperature = temperatureState.value || 2;
+		
+		// 创建各个agent的LLM实例
+		const gameAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('gameAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const characterStatsAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('characterStatsAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const combatAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('combatAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const summaryAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('summaryAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const campaignAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('campaignAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const actionAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('actionAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const eventAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('eventAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
+		);
+		const characterAgentLLM = LLMProvider.provideLLM(
+			createAgentLLMConfig('characterAgent', baseAiConfig, baseApiKey, baseLanguage, baseTemperature),
+			baseAiConfig.useFallbackLlmState
 		);
 		
-		const llm = LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState);
-		gameAgent = new GameAgent(llm);
-		characterStatsAgent = new CharacterStatsAgent(llm);
-		combatAgent = new CombatAgent(llm);
-		summaryAgent = new SummaryAgent(llm);
-		campaignAgent = new CampaignAgent(llm);
-		actionAgent = new ActionAgent(llm);
-		eventAgent = new EventAgent(llm);
-		characterAgent = new CharacterAgent(llm);
+		// 初始化各个agent
+		gameAgent = new GameAgent(gameAgentLLM);
+		characterStatsAgent = new CharacterStatsAgent(characterStatsAgentLLM);
+		combatAgent = new CombatAgent(combatAgentLLM);
+		summaryAgent = new SummaryAgent(summaryAgentLLM);
+		campaignAgent = new CampaignAgent(campaignAgentLLM);
+		actionAgent = new ActionAgent(actionAgentLLM);
+		eventAgent = new EventAgent(eventAgentLLM);
+		characterAgent = new CharacterAgent(characterAgentLLM);
 
 		migrateStates();
 		const currentCharacterName = characterState.value.name;

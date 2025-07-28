@@ -26,6 +26,7 @@
 	import AiGenerationSettings from '$lib/components/interaction_modals/settings/AiGenerationSettings.svelte';
 	import OutputFeaturesModal from '$lib/components/interaction_modals/settings/OutputFeaturesModal.svelte';
 	import SystemPromptsModal from '$lib/components/interaction_modals/settings/SystemPromptsModal.svelte';
+	import AgentModelSettings from '$lib/components/modals/AgentModelSettings.svelte';
 	import backgroundSvg from '$lib/assets/bckg.svg';
 	import logoSvg from '$lib/assets/rollrole.svg';
 
@@ -44,6 +45,7 @@
 	let showGenerationSettingsModal = $state<boolean>(false);
 	let showOutputFeaturesModal = $state<boolean>(false);
 	let showSystemPromptsModal = $state<boolean>(false);
+	let showAgentModelSettingsModal = $state<boolean>(false);
 
 	const gameActionsState = useLocalStorage('gameActionsState', []);
 	const historyMessagesState = useLocalStorage('historyMessagesState', []);
@@ -385,6 +387,12 @@
 			{/if}
 			<button class="btn btn-neutral m-auto mt-5 w-1/2" onclick={() => (showSystemPromptsModal = true)}>
 				System Prompts
+			</button>
+			{#if showAgentModelSettingsModal}
+				<AgentModelSettings onclose={() => (showAgentModelSettingsModal = false)} />
+			{/if}
+			<button class="btn btn-neutral m-auto mt-5 w-1/2" onclick={() => (showAgentModelSettingsModal = true)}>
+				Agent Model Settings
 			</button>
 		</form>
 	</div>
