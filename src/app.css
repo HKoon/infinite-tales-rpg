@@ -18,8 +18,8 @@ h1, h2, h3, h4, h5, h6 {
 	height: auto;
 }
 
-/* Action buttons in Tale page use Noto Sans font */
-.btn.btn-neutral {
+/* Action buttons in Tale page use Noto Sans font (except for main action buttons) */
+.btn.btn-neutral:not(.font-jaro) {
 	font-family: 'Noto Sans', sans-serif;
 }
 

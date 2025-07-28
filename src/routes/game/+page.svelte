@@ -72,6 +72,7 @@
 	import ImpossibleActionModal from '$lib/components/interaction_modals/ImpossibleActionModal.svelte';
 	import GMQuestionModal from '$lib/components/interaction_modals/GMQuestionModal.svelte';
 	import SuggestedActionsModal from '$lib/components/interaction_modals/SuggestedActionsModal.svelte';
+	import ActionSelectionModal from '$lib/components/interaction_modals/ActionSelectionModal.svelte';
 	import type { AIConfig } from '$lib';
 	import ResourcesComponent from '$lib/components/ResourcesComponent.svelte';
 	import { createLLMConfig, createAgentLLMConfig } from '$lib/ai/llmConfigHelper';
@@ -229,6 +230,7 @@
 	let gmQuestionState: string = $state('');
 	let customDiceRollNotation: string = $state('');
 	let itemForSuggestActionsState: (Item & { item_id: string }) | undefined = $state();
+	let showActionSelectionModal: boolean = $state(false);
 	const eventEvaluationState = useLocalStorage<EventEvaluation>(
 		'eventEvaluationState',
 		initialEventEvaluationState
@@ -1528,7 +1530,7 @@
 		resources={getCurrentCharacterGameState()}
 		currentLevel={characterStatsState.value?.level}
 	/>
-	<div id="story" class="mt-4 justify-items-center rounded-lg bg-base-100 p-4 shadow-md">
+	<div id="story" class="mt-4 justify-items-center bg-base-100 p-4 shadow-md">
 		<button onclick={() => showXLastStoryPrgressions++} class="btn-xs w-full"
 			>Show Previous Story
 		</button>
@@ -1572,72 +1574,125 @@
 			></TTSComponent>
 		</div>
 	{/if}
-	<div id="actions" bind:this={actionsDiv} class="mt-2 p-4 pb-0 pt-0"></div>
+	<!-- Actions div is now hidden as actions are shown in modal -->
+	<div id="actions" bind:this={actionsDiv} class="mt-2 p-4 pb-0 pt-0" style="display: none;"></div>
 	{#if Object.keys(currentGameActionState).length !== 0}
 		{#if !isGameEnded.value}
 			{#if characterActionsState.value?.length === 0}
-				<div class="flex flex-col">
-					<span class="m-auto">Generating next actions...</span>
-					<div class="m-auto">
+				<div class="flex flex-col mt-8 mb-6">
+					<span class="m-auto text-base-content/70 font-medium">Generating next actions...</span>
+					<div class="m-auto mt-3">
 						<LoadingIcon />
 					</div>
 				</div>
 			{/if}
-			<div id="static-actions" class="p-4 pb-0 pt-0">
-				<button
-					onclick={() =>
-						sendAction({
-							characterName: characterState.value.name,
-							text: 'Continue The Tale'
-						})}
-					class="text-md btn btn-neutral mb-3 w-full"
-					>Continue The Tale.
-				</button>
+			<!-- 重新设计的按钮区域 -->
+			<div id="static-actions" class="mt-4 bg-base-100 p-4 shadow-md">
+				<div class="space-y-4">
+					<!-- 主要动作按钮组 -->
+					<div class="space-y-3">
+						<button
+							onclick={() =>
+								sendAction({
+									characterName: characterState.value.name,
+									text: 'Continue The Tale'
+								})}
+							class="btn btn-neutral w-full h-14 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
+							>
+							<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+							</svg>
+							Continue The Tale
+						</button>
 
-				{#if levelUpState.value.buttonEnabled}
-					<button
-						onclick={() => {
-							levelUpClicked(characterState.value.name);
-						}}
-						class="text-md btn btn-success mb-3 w-full"
-						>Level up!
-					</button>
-				{/if}
+						<button
+							onclick={() => showActionSelectionModal = true}
+							class="btn btn-neutral w-full h-14 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
+							disabled={characterActionsState.value?.length === 0}
+							>
+							<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+							</svg>
+							Take a Turn
+						</button>
+					</div>
 
-				{#if !eventEvaluationState.value.character_changed?.aiProcessingComplete}
-					<button
-						onclick={() => {
-							eventEvaluationState.value.character_changed!.showEventConfirmationDialog = true;
-						}}
-						class="text-md btn btn-success mb-3 w-full"
-						>Transform into {eventEvaluationState.value.character_changed?.changed_into}
-					</button>
-				{/if}
-				{#if !eventEvaluationState.value.abilities_learned?.aiProcessingComplete}
-					<button
-						onclick={() =>
-							(eventEvaluationState.value.abilities_learned!.showEventConfirmationDialog = true)}
-						class="text-md btn btn-success mb-3 w-full"
-						>Learn new Spells & Abilities
-					</button>
-				{/if}
-				<button
-					onclick={() => {
-						useSpellsAbilitiesModal.showModal();
-					}}
-					class="text-md btn btn-primary w-full"
-					>Spells & Abilities
-				</button>
-				<button
-					onclick={() => {
-						useItemsModal.showModal();
-					}}
-					class="text-md btn btn-primary mt-3 w-full"
-					>Inventory
-				</button>
+					<!-- 特殊事件按钮组 -->
+					{#if levelUpState.value.buttonEnabled || !eventEvaluationState.value.character_changed?.aiProcessingComplete || !eventEvaluationState.value.abilities_learned?.aiProcessingComplete}
+						<div class="border-t border-base-300 pt-4 space-y-3">
+							{#if levelUpState.value.buttonEnabled}
+								<button
+									onclick={() => {
+										levelUpClicked(characterState.value.name);
+									}}
+									class="btn btn-success w-full h-12 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
+									>
+									<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+									</svg>
+									Level Up!
+								</button>
+							{/if}
+
+							{#if !eventEvaluationState.value.character_changed?.aiProcessingComplete}
+								<button
+									onclick={() => {
+										eventEvaluationState.value.character_changed!.showEventConfirmationDialog = true;
+									}}
+									class="btn btn-warning w-full h-12 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
+									>
+									<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+									</svg>
+									Transform into {eventEvaluationState.value.character_changed?.changed_into}
+								</button>
+							{/if}
+
+							{#if !eventEvaluationState.value.abilities_learned?.aiProcessingComplete}
+								<button
+									onclick={() =>
+										(eventEvaluationState.value.abilities_learned!.showEventConfirmationDialog = true)}
+									class="btn btn-info w-full h-12 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
+									>
+									<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+									</svg>
+									Learn New Spells & Abilities
+								</button>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- 管理按钮组 -->
+					<div class="border-t border-base-300 pt-4 space-y-3">
+						<button
+							onclick={() => {
+								useSpellsAbilitiesModal.showModal();
+							}}
+							class="btn btn-primary w-full h-12 text-sm font-jaro font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-0"
+							>
+							<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+							</svg>
+							Spells & Abilities
+						</button>
+						<button
+							onclick={() => {
+								useItemsModal.showModal();
+							}}
+							class="btn btn-primary w-full h-12 text-sm font-jaro font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-0"
+							>
+							<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+							</svg>
+							Inventory
+						</button>
+					</div>
+				</div>
 			</div>
 		{/if}
-		<form id="input-form" class="p-4 pb-2">
+		<!-- Custom action form is now in modal -->
+		<form id="input-form" class="p-4 pb-2" style="display: none;">
 			<div class="w-full lg:join">
 				<select bind:value={customActionReceiver} class="select select-bordered w-full lg:w-fit">
 					<option selected>Character Action</option>
@@ -1666,6 +1721,24 @@
 				</button>
 			</div>
 		</form>
+	{/if}
+
+	{#if showActionSelectionModal}
+		<ActionSelectionModal
+			actions={characterActionsState.value || []}
+			onActionSelected={(action) => {
+				showActionSelectionModal = false;
+				sendAction({
+					characterName: characterState.value.name,
+					text: action.text
+				});
+			}}
+			onCustomActionSubmitted={(customAction) => {
+				showActionSelectionModal = false;
+				onCustomActionSubmitted(customAction);
+			}}
+			onclose={() => showActionSelectionModal = false}
+		/>
 	{/if}
 
 	<style>
