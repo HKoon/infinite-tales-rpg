@@ -1578,14 +1578,6 @@
 	<div id="actions" bind:this={actionsDiv} class="mt-2 p-4 pb-0 pt-0" style="display: none;"></div>
 	{#if Object.keys(currentGameActionState).length !== 0}
 		{#if !isGameEnded.value}
-			{#if characterActionsState.value?.length === 0}
-				<div class="flex flex-col mt-8 mb-6">
-					<span class="m-auto text-base-content/70 font-medium">Generating next actions...</span>
-					<div class="m-auto mt-3">
-						<LoadingIcon />
-					</div>
-				</div>
-			{/if}
 			<!-- 重新设计的按钮区域 -->
 			<div id="static-actions" class="mt-4 bg-base-100 p-4 shadow-md">
 				<div class="space-y-4">
@@ -1608,7 +1600,6 @@
 						<button
 							onclick={() => showActionSelectionModal = true}
 							class="btn btn-neutral w-full h-14 text-base font-jaro font-medium shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
-							disabled={characterActionsState.value?.length === 0}
 							>
 							<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
