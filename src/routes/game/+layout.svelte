@@ -68,7 +68,7 @@
 	});
 </script>
 
-<main class="min-h-screen relative overflow-hidden font-jaro">
+<main class="h-screen relative overflow-hidden font-jaro">
 	<!-- 背景图片 -->
 	<div 
 		class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -118,7 +118,7 @@
 			<ErrorModal />
 		{/if}
 
-		<nav class="btm-nav ml-auto mr-auto h-[7vh] max-w-7xl overflow-auto bg-base-300 z-50">
+		<nav class="btm-nav ml-auto mr-auto h-[7vh] overflow-hidden bg-base-300 z-50 flex-shrink-0">
 			<ul class="menu gap-0 p-0 sm:text-lg">
 				<li>
 					<a href="/game" class:active={activeUrl === '/game'}>Tale</a>
