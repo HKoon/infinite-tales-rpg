@@ -142,7 +142,7 @@
 			class:lg:max-h-[86vh]={hasSubMenu}
 			class:max-h-[85vh]={!hasSubMenu}
 			class:lg:max-h-[93vh]={!hasSubMenu}
-			class="ml-auto mr-auto max-w-7xl overflow-auto pb-[8vh]"
+			class="ml-auto mr-auto max-w-7xl overflow-auto pb-[12vh]"
 		>
 			{@render children()}
 		</main>
