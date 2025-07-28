@@ -252,8 +252,7 @@ export class CharacterStatsAgent {
 			stringifyPretty(npcsToGenerate);
 		const request: LLMRequest = {
 			userMessage: action,
-			systemInstruction: agent,
-			model: GEMINI_MODELS.FLASH_THINKING_2_0
+			systemInstruction: agent
 		};
 		return (await this.llm.generateContent(request))?.content as NPCState;
 	}

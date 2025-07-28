@@ -79,7 +79,6 @@ export class EventAgent {
 		const request: LLMRequest = {
 			userMessage: 'Evaluate the events for STORY PROGRESSION:\n' + storyHistory.join('\n'),
 			systemInstruction: agent,
-			model: GEMINI_MODELS.FLASH_THINKING_2_0,
 			temperature: 0.1
 		};
 		const response = await this.llm.generateContent(request);

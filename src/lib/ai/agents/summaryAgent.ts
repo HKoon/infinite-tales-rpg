@@ -39,8 +39,7 @@ export class SummaryAgent {
 		const request: LLMRequest = {
 			userMessage: 'Summarize the following story: \n' + stringifyPretty(toSummarize),
 			systemInstruction: agent,
-			temperature: 1,
-			model: GEMINI_MODELS.FLASH_THINKING_2_0
+			temperature: 1
 		};
 		const response = (await this.llm.generateContent(request))?.content as {
 			story: string;
@@ -95,7 +94,6 @@ export class SummaryAgent {
 			userMessage: 'STORY PROGRESSION:\n' + storyProgression + '\n\n' + jsonPrompt,
 			systemInstruction: agent,
 			historyMessages: consideredHistory,
-			model: GEMINI_MODELS.FLASH_2_0,
 			temperature: 0.1
 		};
 		const response = (await this.llm.generateContent(request))?.content as RelatedStoryHistory;
