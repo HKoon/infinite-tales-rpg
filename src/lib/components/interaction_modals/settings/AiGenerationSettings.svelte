@@ -7,7 +7,7 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
 		useFallbackLlmState: false,
 		disableImagesState: false,
-		disableAudioState: false
+		disableAudioState: true
 	});
 	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	const aiLanguage = useLocalStorage<string>('aiLanguage', '');

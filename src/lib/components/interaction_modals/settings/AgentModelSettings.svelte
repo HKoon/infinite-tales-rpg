@@ -7,7 +7,7 @@
 	let { onclose }: { onclose?: () => void } = $props();
 
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
-		disableAudioState: false,
+		disableAudioState: true,
 		disableImagesState: false,
 		useFallbackLlmState: false,
 		selectedProvider: 'gemini'

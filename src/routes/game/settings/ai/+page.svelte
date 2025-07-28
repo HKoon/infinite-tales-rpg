@@ -37,7 +37,7 @@
 	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	//TODO migrate all AI settings into this object to avoid too many vars in local storage
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
-		disableAudioState: false,
+		disableAudioState: true,
 		disableImagesState: false,
 		useFallbackLlmState: false,
 		selectedProvider: 'gemini'

@@ -13,7 +13,7 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState', {
 		useFallbackLlmState: false,
 		disableImagesState: false,
-		disableAudioState: false
+		disableAudioState: true
 	});
 	const ttsVoiceState = useLocalStorage<string>('ttsVoice', 'de-DE-SeraphinaMultilingualNeural');
 	let ttsVoices: Voice[] = $state([]);
