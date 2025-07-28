@@ -20,7 +20,7 @@
 		imagePrompt = '',
 		stream_finished = true
 	}: StoryProgressionWithImageProps = $props();
-	const ttsVoiceState = useLocalStorage<string>('ttsVoice');
+	const ttsVoiceState = useLocalStorage<string>('ttsVoice', 'de-DE-SeraphinaMultilingualNeural');
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
 
 	let rendered = (toRender: string) => {

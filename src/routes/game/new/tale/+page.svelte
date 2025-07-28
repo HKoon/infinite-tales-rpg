@@ -19,6 +19,7 @@
 	let isGeneratingState = $state(false);
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
 	const aiLanguage = useLocalStorage<string>('aiLanguage');
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	let storyAgent: StoryAgent;
 
 	const storyState = useLocalStorage<Story>('storyState', { ...initialStoryState });
@@ -34,7 +35,7 @@
 			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
 			apiKeyState.value || '',
 			aiLanguage.value || '',
-			2
+			temperatureState.value
 		);
 		
 		storyAgent = new StoryAgent(

@@ -44,13 +44,14 @@ import AbilityEditor from '$lib/components/interaction_modals/character/AbilityE
 	);
 
 	let characterStatsStateOverwrites = $state(cloneDeep(initialCharacterStatsState));
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 
 	onMount(() => {
 		const llmConfig = createLLMConfig(
 			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
 			apiKeyState.value || '',
 			aiLanguage.value || '',
-			2
+			temperatureState.value
 		);
 		
 		characterStatsAgent = new CharacterStatsAgent(

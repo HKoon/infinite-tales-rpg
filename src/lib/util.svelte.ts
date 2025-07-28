@@ -171,7 +171,29 @@ export function playAudioFromStream(text, voice, onended?): HTMLAudioElement {
 	
 	// Add error handling for audio loading and playback
 	audio.addEventListener('error', (e) => {
-		console.error('Audio playback error:', e);
+		const target = e.target as HTMLAudioElement;
+		let errorMessage = 'Audio playback error';
+		
+		if (target && target.error) {
+			switch (target.error.code) {
+				case MediaError.MEDIA_ERR_ABORTED:
+					errorMessage = 'Audio playback was aborted';
+					break;
+				case MediaError.MEDIA_ERR_NETWORK:
+					errorMessage = 'Network error while loading audio';
+					break;
+				case MediaError.MEDIA_ERR_DECODE:
+					errorMessage = 'Audio decoding error';
+					break;
+				case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+					errorMessage = 'Audio format not supported';
+					break;
+				default:
+					errorMessage = 'Unknown audio error';
+			}
+		}
+		
+		console.error(errorMessage, e);
 		// Try to clean up the audio element
 		try {
 			audio.pause();
@@ -192,6 +214,11 @@ export function playAudioFromStream(text, voice, onended?): HTMLAudioElement {
 
 	// Set up the source and autoplay
 	try {
+		if (!voice) {
+			console.error('No TTS voice specified');
+			return audio;
+		}
+		
 		audio.src = getTTSUrl(text, voice);
 		audio.autoplay = true;
 		

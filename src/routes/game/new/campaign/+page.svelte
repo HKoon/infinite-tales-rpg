@@ -40,13 +40,14 @@
 	let campaignStateOverwrites = $state({});
 	const characterState = useLocalStorage<CharacterDescription>('characterState');
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 
 	onMount(() => {
 		const llmConfig = createLLMConfig(
 			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
 			apiKeyState.value || '',
 			aiLanguage.value || '',
-			2
+			temperatureState.value
 		);
 		
 		campaignAgent = new CampaignAgent(

@@ -57,7 +57,7 @@
 			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
 			apiKeyState.value || '',
 			aiLanguage.value || '',
-			temperatureState.value || 2
+			temperatureState.value || 1
 		);
 		
 		const llm = LLMProvider.provideLLM(llmConfig, aiConfigState.value?.useFallbackLlmState);

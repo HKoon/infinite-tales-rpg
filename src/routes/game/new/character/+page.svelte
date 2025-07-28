@@ -36,6 +36,7 @@
 	let characterStateOverwrites: Partial<CharacterDescription> = $state({});
 	let resetImageState = $state(false);
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	const playerCharactersIdToNamesMapState = useLocalStorage<PlayerCharactersIdToNamesMap>(
 		'playerCharactersIdToNamesMapState',
 		{}
@@ -46,7 +47,7 @@
 			aiConfigState.value || { disableAudioState: false, disableImagesState: false, useFallbackLlmState: false, selectedProvider: 'gemini' },
 			apiKeyState.value || '',
 			aiLanguage.value || '',
-			2
+			temperatureState.value
 		);
 		
 		characterAgent = new CharacterAgent(

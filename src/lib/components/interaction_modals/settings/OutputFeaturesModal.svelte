@@ -15,7 +15,7 @@
 		disableImagesState: false,
 		disableAudioState: false
 	});
-	const ttsVoiceState = useLocalStorage<string>('ttsVoice');
+	const ttsVoiceState = useLocalStorage<string>('ttsVoice', 'de-DE-SeraphinaMultilingualNeural');
 	let ttsVoices: Voice[] = $state([]);
 
 	onMount(async () => {

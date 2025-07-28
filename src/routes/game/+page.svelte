@@ -111,7 +111,7 @@
 
 	//ai state
 	const apiKeyState = useLocalStorage<string>('apiKeyState');
-	const temperatureState = useLocalStorage<number>('temperatureState');
+	const temperatureState = useLocalStorage<number>('temperatureState', 1);
 	const systemInstructionsState = useLocalStorage<SystemInstructionsState>(
 		'systemInstructionsState',
 		initialSystemInstructionsState
@@ -237,7 +237,7 @@
 	const aiConfigState = useLocalStorage<AIConfig>('aiConfigState');
 	let useDynamicCombat = useLocalStorage('useDynamicCombat', false);
 	let gameSettingsState = useLocalStorage<GameSettings>('gameSettingsState', defaultGameSettings());
-	const ttsVoiceState = useLocalStorage<string>('ttsVoice');
+	const ttsVoiceState = useLocalStorage<string>('ttsVoice', 'de-DE-SeraphinaMultilingualNeural');
 
 	onMount(async () => {
 		beforeNavigate(({ cancel }) => {
@@ -1342,7 +1342,16 @@
 				}, 50);
 			}
 		}
-		storyChunkState = storyChunk;
+		
+		// 累积story chunks而不是替换
+		if (isComplete) {
+			// 流式输出完成，标记完成状态
+			storyChunkState = storyChunkState; // 保持当前累积的内容
+		} else {
+			// 累积新的chunk到现有内容
+			storyChunkState += storyChunk;
+		}
+		
 		isAiGeneratingState = false;
 	}
 
