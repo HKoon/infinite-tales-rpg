@@ -26,7 +26,7 @@
 	import AiGenerationSettings from '$lib/components/interaction_modals/settings/AiGenerationSettings.svelte';
 	import OutputFeaturesModal from '$lib/components/interaction_modals/settings/OutputFeaturesModal.svelte';
 	import SystemPromptsModal from '$lib/components/interaction_modals/settings/SystemPromptsModal.svelte';
-	import AgentModelSettings from '$lib/components/modals/AgentModelSettings.svelte';
+	import AgentModelSettings from '$lib/components/interaction_modals/settings/AgentModelSettings.svelte';
 	import backgroundSvg from '$lib/assets/bckg.svg';
 	import logoSvg from '$lib/assets/rollrole.svg';
 
