@@ -4,6 +4,7 @@
 	import github from '$lib/assets/socials/icone-github-jaune.png';
 	import Disclaimer from '$lib/components/Disclaimer.svelte';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	
 	// Import game type images
 	import mapD6 from '$lib/assets/game-types/map-d6.svg';
@@ -15,6 +16,24 @@
 
 	let disclaimerOpen = $state(false);
 	let showSettings = $state(false);
+	let settingsDropdown;
+
+	// 处理点击外部区域关闭弹窗
+	function handleClickOutside(event) {
+		if (showSettings && settingsDropdown && !settingsDropdown.contains(event.target)) {
+			showSettings = false;
+		}
+	}
+
+	onMount(() => {
+		// 添加全局点击事件监听器
+		document.addEventListener('click', handleClickOutside);
+		
+		// 清理函数
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
 
 	const gameTypes = [
 		{
@@ -76,7 +95,7 @@
 			<div class="flex items-center">
 				<img src={logoSvg} alt="Roll Role Logo" class="h-12 w-auto mr-4" />
 			</div>
-			<div class="relative">
+			<div class="relative" bind:this={settingsDropdown}>
 				<button
 					aria-label="Settings"
 					onclick={() => showSettings = !showSettings}
@@ -101,8 +120,6 @@
 					<div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
 						<a href="/game/settings/ai" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">AI Settings</a>
 						<a href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">API Key Guide</a>
-						<a href="https://discord.gg/CUvgRQR77y" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Discord Community</a>
-						<a href="https://github.com/JayJayBinks/infinite-tales-rpg" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">GitHub</a>
 					</div>
 				{/if}
 			</div>

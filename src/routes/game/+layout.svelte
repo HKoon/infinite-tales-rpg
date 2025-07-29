@@ -14,12 +14,24 @@
 	let { children } = $props();
 	let activeUrl = $state('');
 	let hasSubMenu = $state(false);
+	let settingsDropdown;
+	
 	$effect(() => {
 		activeUrl = $page.url.pathname;
 		hasSubMenu = activeUrl.includes('game/settings');
 	});
 
+	// 处理点击外部区域关闭弹窗
+	function handleClickOutside(event) {
+		if (showSettings && settingsDropdown && !settingsDropdown.contains(event.target)) {
+			showSettings = false;
+		}
+	}
+
 	onMount(() => {
+		// 添加全局点击事件监听器
+		document.addEventListener('click', handleClickOutside);
+		
 		window.onerror = (event, source, lineno, colno, error) => {
 			let text = '';
 			if (error.message) {
@@ -62,6 +74,7 @@
 
 		// Cleanup function
 		return () => {
+			document.removeEventListener('click', handleClickOutside);
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 			window.removeEventListener('pagehide', handleBeforeUnload);
 		};
@@ -82,7 +95,7 @@
 			<a href="/" class="flex items-center">
 				<img src={logoSvg} alt="Roll Role Logo" class="h-12 w-auto mr-4" />
 			</a>
-			<div class="relative">
+			<div class="relative" bind:this={settingsDropdown}>
 				<button
 					aria-label="Settings"
 					onclick={() => showSettings = !showSettings}
@@ -104,45 +117,40 @@
 					</svg>
 				</button>
 				{#if showSettings}
-					<div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-						<a href="/game/settings/ai" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">AI Settings</a>
-						<a href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">API Key Guide</a>
-						<a href="https://discord.gg/CUvgRQR77y" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Discord Community</a>
-						<a href="https://github.com/JayJayBinks/infinite-tales-rpg" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">GitHub</a>
+					<div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50">
+						<!-- 主导航 -->
+						<div class="border-b border-gray-200 pb-1 mb-1">
+							<a href="/game" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" class:bg-gray-100={activeUrl === '/game'}>Tale</a>
+							<a href="/game/debugstate" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" class:bg-gray-100={activeUrl === '/game/debugstate'}>Debug Info</a>
+							<a href="/game/character" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" class:bg-gray-100={activeUrl === '/game/character'}>Character</a>
+						</div>
+						<!-- 设置导航 -->
+						<div class="border-b border-gray-200 pb-1 mb-1">
+							<a href="/game/settings/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" class:bg-gray-100={activeUrl === '/game/settings'}>Tale Settings</a>
+							<a href="/game/settings/ai" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" class:bg-gray-100={activeUrl === '/game/settings/ai'}>AI Settings</a>
+						</div>
+						<!-- 外部链接 -->
+						<div>
+							<a href="https://github.com/JayJayBinks/infinite-tales-rpg/wiki/Create-your-free-Google-Gemini-API-Key-%F0%9F%94%91" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">API Key Guide</a>
+						</div>
 					</div>
 				{/if}
 			</div>
 		</nav>
+		
 
 		{#if errorState.userMessage && activeUrl !== '/game'}
 			<ErrorModal />
 		{/if}
 
-		<nav class="btm-nav ml-auto mr-auto h-[7vh] overflow-hidden bg-base-300 z-50 flex-shrink-0">
-			<ul class="menu gap-0 p-0 sm:text-lg">
-				<li>
-					<a href="/game" class:active={activeUrl === '/game'}>Tale</a>
-				</li>
-				<li>
-					<a href="/game/debugstate" class:active={activeUrl === '/game/debugstate'}>Debug Info</a>
-				</li>
-				<li>
-					<a href="/game/character" class:active={activeUrl === '/game/character'}>Character</a>
-				</li>
-				<li>
-					<a href="/game/settings/ai" class:active={activeUrl.includes('/game/settings')}>Menu</a>
-				</li>
-			</ul>
-		</nav>
-
 		<!--TODO max-h-[85vh] is just a workaround because the mobile browser address bar makes 93vh higher than it should...
 		-->
 		<main
-			class:max-h-[78vh]={hasSubMenu}
-			class:lg:max-h-[86vh]={hasSubMenu}
-			class:max-h-[85vh]={!hasSubMenu}
-			class:lg:max-h-[93vh]={!hasSubMenu}
-			class="ml-auto mr-auto max-w-7xl overflow-auto pb-[12vh]"
+			class:max-h-[85vh]={hasSubMenu}
+			class:lg:max-h-[93vh]={hasSubMenu}
+			class:max-h-[92vh]={!hasSubMenu}
+			class:lg:max-h-[100vh]={!hasSubMenu}
+			class="ml-auto mr-auto max-w-7xl overflow-auto pb-12"
 		>
 			{@render children()}
 		</main>

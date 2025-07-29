@@ -10,15 +10,5 @@
 		activeUrl = $page.url.pathname;
 	});
 </script>
-<nav class="btm-nav bottom-[6vh] ml-auto mr-auto h-[7vh] max-w-7xl overflow-auto bg-base-300 z-50">
-	<ul class="menu gap-0 p-0 sm:text-lg">
-		<li>
-			<a href="/game/settings/" class:active={activeUrl === '/game/settings'}>Tale Settings</a>
-		</li>
-		<li>
-			<a href="/game/settings/ai" class:active={activeUrl === '/game/settings/ai'}>AI Settings</a>
-		</li>
-	</ul>
-</nav>
 
 {@render children()}
