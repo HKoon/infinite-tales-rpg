@@ -177,6 +177,8 @@ export class AdvancedStoryExtractor {
 	private accumulatedText = '';
 	private lastStoryLength = 0;
 	private storyComplete = false;
+	private storyStartFound = false;
+	private storyStartPosition = -1;
 
 	constructor(
 		private storyUpdateCallback: (storyChunk: string, isComplete: boolean) => void
@@ -191,70 +193,77 @@ export class AdvancedStoryExtractor {
 
 		// 尝试提取JSON对象
 		try {
-			// 使用更灵活的方式来查找和提取story内容
-			let startIndex = this.accumulatedText.indexOf('"story"');
-			if (startIndex !== -1) {
-				// 找到story字段后的冒号
-				let colonIndex = this.accumulatedText.indexOf(':', startIndex);
-				if (colonIndex !== -1) {
-					// 找到冒号后的第一个引号
-					let contentStart = this.accumulatedText.indexOf('"', colonIndex);
-					if (contentStart !== -1) {
-						contentStart++; // 移过开始引号
-						console.log('🎯 Found story field start, beginning stream output');
-						
-						// 获取当前可用的内容（不需要等待结束引号）
-						let currentContent = this.accumulatedText.substring(contentStart);
-						
-						// 检查是否有结束引号
-						let contentEnd = -1;
-						let i = 0;
-						let isEscaped = false;
-
-						while (i < currentContent.length) {
-							if (currentContent[i] === '\\') {
-								isEscaped = !isEscaped;
-								i++;
-								continue;
-							}
-							
-							if (currentContent[i] === '"' && !isEscaped) {
-								contentEnd = i;
-								break;
-							}
-							
-							if (currentContent[i] !== '\\') {
-								isEscaped = false;
-							}
-							
-							i++;
-						}
-
-						// 如果找到结束引号，只处理到结束引号的内容
-						let storyContent;
-						if (contentEnd !== -1) {
-							storyContent = currentContent.substring(0, contentEnd);
-							this.storyComplete = true;
-						} else {
-							// 没有找到结束引号，处理所有可用内容
-							storyContent = currentContent;
-						}
-						
-						const unescapedContent = this.unescapeJsonString(storyContent);
-						
-						// 只发送新的内容
-						if (unescapedContent.length > this.lastStoryLength) {
-							const newContent = unescapedContent.slice(this.lastStoryLength);
-							console.log('📤 Sending story chunk:', newContent.substring(0, 50) + (newContent.length > 50 ? '...' : ''));
-							this.storyUpdateCallback(newContent, this.storyComplete);
-							this.lastStoryLength = unescapedContent.length;
-						}
-
-						// 如果已完成，发送完成信号
-						if (this.storyComplete) {
-							console.log('✅ Story field completed');
+			// 如果还没有找到story字段的开始位置，先查找
+			if (!this.storyStartFound) {
+				let startIndex = this.accumulatedText.indexOf('"story"');
+				if (startIndex !== -1) {
+					// 找到story字段后的冒号
+					let colonIndex = this.accumulatedText.indexOf(':', startIndex);
+					if (colonIndex !== -1) {
+						// 找到冒号后的第一个引号
+						let contentStart = this.accumulatedText.indexOf('"', colonIndex);
+						if (contentStart !== -1) {
+							this.storyStartFound = true;
+							this.storyStartPosition = contentStart + 1; // 移过开始引号
+							console.log('🎯 Found story field start at position:', this.storyStartPosition);
 						}
 					}
+				}
+			}
+
+			// 如果已经找到story字段开始位置，处理内容
+			if (this.storyStartFound && this.storyStartPosition !== -1) {
+				// 获取从story开始位置到当前的所有内容
+				let currentContent = this.accumulatedText.substring(this.storyStartPosition);
+						
+				// 检查是否有结束引号
+				let contentEnd = -1;
+				let i = 0;
+				let isEscaped = false;
+
+				while (i < currentContent.length) {
+					if (currentContent[i] === '\\') {
+						isEscaped = !isEscaped;
+						i++;
+						continue;
+					}
+					
+					if (currentContent[i] === '"' && !isEscaped) {
+						contentEnd = i;
+						break;
+					}
+					
+					if (currentContent[i] !== '\\') {
+						isEscaped = false;
+					}
+					
+					i++;
+				}
+
+				// 确定要处理的内容
+				let storyContent;
+				if (contentEnd !== -1) {
+					// 找到结束引号，只处理到结束引号的内容
+					storyContent = currentContent.substring(0, contentEnd);
+					this.storyComplete = true;
+				} else {
+					// 没有找到结束引号，处理所有可用内容
+					storyContent = currentContent;
+				}
+				
+				const unescapedContent = this.unescapeJsonString(storyContent);
+				
+				// 只发送新的内容（增量更新）
+				if (unescapedContent.length > this.lastStoryLength) {
+					const newContent = unescapedContent.slice(this.lastStoryLength);
+					console.log('📤 Sending story chunk:', newContent.substring(0, 50) + (newContent.length > 50 ? '...' : ''));
+					this.storyUpdateCallback(newContent, this.storyComplete);
+					this.lastStoryLength = unescapedContent.length;
+				}
+
+				// 如果已完成，发送完成信号
+				if (this.storyComplete) {
+					console.log('✅ Story field completed');
 				}
 			}
 		} catch (error) {
@@ -287,6 +296,8 @@ export class AdvancedStoryExtractor {
 		this.accumulatedText = '';
 		this.lastStoryLength = 0;
 		this.storyComplete = false;
+		this.storyStartFound = false;
+		this.storyStartPosition = -1;
 	}
 }
 
