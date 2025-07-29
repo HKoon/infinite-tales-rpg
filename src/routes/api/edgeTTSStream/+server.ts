@@ -1,8 +1,9 @@
-import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import { OUTPUT_FORMAT } from 'msedge-tts';
 import { StreamManager, generateStreamId } from '$lib/utils/streamManager';
+import { SafeMsEdgeTTS } from '$lib/utils/ttsWrapper';
 
 export async function GET({ url }) {
-	let tts = null;
+	let tts: SafeMsEdgeTTS | null = null;
 	let readable = null;
 	let streamId = null;
 	
@@ -20,7 +21,7 @@ export async function GET({ url }) {
 			data.voice = 'de-DE-SeraphinaMultilingualNeural';
 		}
 
-		tts = new MsEdgeTTS();
+		tts = new SafeMsEdgeTTS();
 		await tts.setMetadata(data.voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
 		const streamResult = tts.toStream(data.text);
@@ -88,7 +89,7 @@ export async function GET({ url }) {
 				}
 				
 				// Clean up the TTS instance
-				if (tts && typeof tts.close === 'function') {
+				if (tts && tts.isActive()) {
 					try {
 						tts.close();
 					} catch (error) {
@@ -124,7 +125,7 @@ export async function GET({ url }) {
 				console.error('Error during cleanup:', cleanupError);
 			}
 		}
-		if (tts && typeof tts.close === 'function') {
+		if (tts && tts.isActive()) {
 			try {
 				tts.close();
 			} catch (cleanupError) {
