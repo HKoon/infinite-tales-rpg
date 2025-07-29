@@ -1,6 +1,4 @@
 import { setupGlobalErrorHandlers } from '$lib/utils/globalErrorHandler';
-// 应用 msedge-tts 补丁
-import '$lib/utils/msedgeTtsPatch';
 import type { Handle } from '@sveltejs/kit';
 
 // 设置全局错误处理器
